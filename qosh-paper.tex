@@ -1,0 +1,290 @@
+\documentclass{sig-alternate}
+\usepackage[utf8]{inputenc}
+\usepackage{graphics}
+\usepackage{hyperref}
+\usepackage{listings}
+
+\begin{document}
+%opening
+%
+% --- Author Metadata here ---
+\conferenceinfo{WOODSTOCK}{'97 El Paso, Texas USA}
+%\CopyrightYear{2007} % Allows default copyright year (20XX) to be over-ridden - IF NEED BE.
+%\crdata{0-12345-67-8/90/01}  % Allows default copyright data (0-89791-88-6/97/05) to be over-ridden - IF NEED BE.
+% --- End of Author Metadata ---
+
+\title{Assessment, design and implementation of a private cloud for MapReduce applications}
+
+\numberofauthors{4}
+
+\author{
+%
+\alignauthor
+Patricia Gonz\'alez G\'omez\\
+       \affaddr{Department of Electronics and Systems at UDC}\\
+       \affaddr{Campus de Elvi\~na s/n, 15007}\\
+       \affaddr{A Coru\~na, Spain}\\
+       \email{patricia.gonzalez@udc.es}
+% 2nd. author
+\alignauthor
+Jos\'e Carlos Cabaleiro Dom\'inguez\\
+       \affaddr{Institute for Clarity in Documentation}\\
+       \affaddr{P.O. Box 1212}\\
+       \affaddr{Dublin, Ohio 43017-6221}\\
+       \email{jc.cabaleiro@usc.es}
+% 3rd. author
+\alignauthor
+Tom\'as Fern\'andez Pena\\
+       \affaddr{The Th{\o}rv{\"a}ld Group}\\
+       \affaddr{1 Th{\o}rv{\"a}ld Circle}\\
+       \affaddr{Hekla, Iceland}\\
+       \email{tf.pena@usc.es}
+\and  % use '\and' if you need 'another row' of author names
+% 4th. author
+\alignauthor
+Marcos Salgueiro Balsa\\
+       \affaddr{Brookhaven Laboratories}\\
+       \affaddr{Brookhaven National Lab}\\
+       \affaddr{P.O. Box 5000}\\
+       \email{marcos.salgueiro@gmail.com}
+}
+
+\maketitle
+
+
+
+\begin{abstract}
+The extraordinarily vast amount of information generated as a byproduct of Internet usage, has been embodying an increasing burden to traditional procedures and models, unable to handle it efficiently due to its heterogeneous nature. Besides, as the volume of information grows so does the size of the datacenter required to process and store it, quickly overloading its full capacity when demand peaks. Together ---\emph{not relational} data and uneven demand distribution--- they shape the basis of modern data-driven request servicing.
+
+A series of technologies have been developing lately to manage this scenario. Two of the most highlighted among them are \emph{MapReduce} and \emph{Cloud Computing}. \emph{MapReduce} was introduced in \cite{Dean:2004:MSD:1251254.1251264} to abstract the common difficulties linked to distributed processing on large clusters. \emph{Cloud Computing}, on the other hand, agglutinates miscellaneous subsystems forming a unified interface to flexibly deploy and manage virtual clusters.
+
+This paper explores their potential symbiosis, in order to create a robust and scalable environment, to execute \emph{MapReduce} workflows regardless of the underlaying infrastructure. It also details a proof of concept implementation using open source tools, similar to Amazon's own \emph{Elastic MapReduce}.
+\end{abstract}
+
+
+
+\keywords{Distributed Processing, Virtualization, Cloud Computing, MapReduce, OpenStack, Hadoop.\\}
+
+
+
+\section{Introduction}\label{sec:int}
+\noindent The proliferation of Internet-enabled handhelds and the continuously improving access speed, have set a background in which user services are becoming heftier ---from SQ Video yesterday to HD today and 4K tomorrow---, are being consumed throughout the day and are requiring an increasing amount of user-related data ---GPS position, locale, personal settings, filters, previous searches or purchases, connections, friends, retweets, etc.--- to take into account. It is this last trait what have been representing the biggest trouble: the \emph{class} of data packed within these services cannot be modeled by traditional standards, as it lacks a relational structure.
+
+While some argue that every miniworld may be \emph{transformed} into a Relational Model, it is the necessity to lay out the data structure before information can be saved and put to use what poses a central obstacle in making these models adapt to such a swiftly mutating data. As figure \ref{fig:trend} depicts, the gap between relational and unstructured information continues to widen, that is why there has been an explicit push off schema-driven modeling towards loosely-structured representations.
+
+\begin{figure}[tbp]
+\centering
+\includegraphics[width=0.45\textwidth]{img/001}
+\caption{Unstructured and relational data volume evolution. Source: \emph{Cloudera Inc.}}
+\label{fig:trend}
+\end{figure}
+
+So, relaying on \emph{schemaless} data definition allows to better cope with unstructured information. There are still, however, two dimensions to discuss: data volume and non-uniform access distribution.
+
+To handle data flowing in at Internet scale there has to be devised a distributed processing model beyond large clusters, high capacity networks and intelligent load balancers. To deal with that sea of data, \emph{MapReduce} processing model splits input all the way down to unrelated pairs of \emph{unique} key and key-related data. Using the approach to uniquely identify each \emph{atomic} piece of information, allows to easily apply a fair distribution policy across participating nodes able to reduce network transfers and to recover from failure.
+
+Finally, clusters' capacity has to be able to accommodate a variable number of information requests per second, reducing idle node time without implying a loss in service quality. An ideally suited technique to that end is \emph{Cloud Computing}. \emph{Cloud Computing} has been making headlines as of late praised for its inherent nature to scale-out virtual deployments effortlessly, and so, capable of stretching and shrinking computational power with demand needs.
+
+Inasmuch as \emph{MapReduce} and \emph{Cloud Computing} together may prove useful in servicing a potential world of data consumers, it is easy to understand the growing interest in both technologies. Currently, the best known example of a unified approach to said technologies is \emph{Amazon Elastic MapReduce} (EMR) \cite{emr:2013:online}. Nonetheless, there are other implementations focusing on extending EMR's functionality, either by surpassing its constraints ---information must be made semi-public and \emph{MapReduce} workflows need to be executed on Amazon's installation--- with \emph{Resilin} \cite{resilin}, \emph{Savanna} \cite{savanna:2013:online} or \emph{Dynamic MapReduce} \cite{dynamicmapreduce}, or by reusing its cloud interface to build a \emph{MapReduce} platform upon like with \emph{Cloud MapReduce} \cite{cloudmapreduce}.
+
+The major contribution of this work is a simple and unified interface to manage \emph{MapReduce} computations, leveraging any existing \emph{IaaS} deployment with a little customization, while providing an automatic one node test installation based on \emph{OpenStack} and \emph{Apache Hadoop}. We have called our implementation \emph{qosh} and it has been written in \emph{Python}.
+
+Section \ref{sec:arch} details \emph{qosh}'s architecture and self-installing deployment structure.
+
+
+
+\section{Architecture}\label{sec:arch}
+\noindent \emph{qosh}'s setup defaults to a single node installation in which both infrastructure and execution environment is configured. Figure \ref{fig:arch1} precisely depicts the layered configuration. Atop Fedora 17 our setup script downloads and installs \emph{OpenStack} precompiled packages, and afterwards it downloads, untars and registers a virtual machine image containing an \emph{Oracle 1.7 JRE} and \emph{Apache Hadoop 1.0.4} installation. Likewise, it automatically creates the right user and tenant so that \emph{qosh} may be put to use straightaway.
+
+\begin{figure}[tbp]
+\centering
+\includegraphics[width=0.45\textwidth]{img/002}
+\caption{High level design diagram}
+\label{fig:arch1}
+\end{figure}
+
+At the right end of Figure \ref{fig:arch1}, it appears an \emph{Interface} module lying on top of Fedora and being connected to both \emph{OpenStack} and \emph{Apache Hadoop}. Its main purpose is to deploy virtual \emph{Hadoop} clusters, to manage its component virtual machines' ---or \emph{VM}s--- lifecycles and to orchestrate \emph{MapReduce} workflows executions.
+
+
+
+\subsection{Initial deployment}
+\noindent \emph{qosh}'s own installation script will automatically configure a highly-performing testing environment that could be easily scaled-out as demand grows. Figure \ref{fig:initial} represents the layered setup decomposition in a single node after the installation procedure had finished.
+
+\begin{figure}[tbp]
+\centering
+\includegraphics[width=0.45\textwidth]{img/005}
+\caption{Layered initial deployment}
+\label{fig:initial}
+\end{figure}
+
+The \emph{OpenStack} modules deployed are those fundamentally required by a minimum standalone setup:
+
+\begin{description}
+ \item[Keystone] manages authorization, authentication and quota by user and \emph{tenant}.
+ \item[Nova] handles VMs' lifecycles and networking configuration, routing and data flow utilizing the \emph{Kernel Virtual Machine} (KVM) as hypervisor.
+ \item[Glance] holds the browsable catalog of installed VM images on the local file system.
+\end{description}
+
+Which implies that no fault tolerance measures are defined ---as expected from a single node and local file system arrangement--- cloud-wise, but it certainly allows for other standard safety protocols to be implemented ---on the order of some RAID level with replication or UPS solutions.
+
+
+\subsection{Apache Hadoop Virtual Machine}
+The \emph{Apache Hadoop} installation has been manually configured from scratch inside a virtual machine, in such a way that it could be run on top of any \emph{Amazon Elastic Compute Cloud} (EC2) compatible \emph{IaaS} service, with no theoretical limit to horizontal or vertical scaling. What follows is the procedure carried out to yield the VM image.
+
+\begin{itemize}
+ \item After a clean Fedora 17 installation, \texttt{yum} was employed to add the \emph{Virtual Machine Manager} (\texttt{virt-manager}) package which would be exerted to sketch the VM. Along with it, \texttt{libvirt}, \texttt{kvm} and \texttt{qemu} were also installed.
+ \item Using \texttt{virt-manager} a VM was spawned anew with 1 VCPU, 1 GB RAM and 4 GB HDD.
+ \item A \emph{CentOS 6.3} network installation image was booted inside the VM, choosing \emph{Basic Server} as set of packages to be configured within a single \emph{ext4}-formatted partition without LVM.
+ \item Once completed and self-restarted, the system was updated and \emph{SELinux} relaxed to be \emph{permissive} by issuing:
+ 
+   \fbox{\texttt{\parbox[c][5.6em][c]{0.385\textwidth}{sudo yum update -y \\ sudo setenforce 0 \\ sudo sed -i \textbackslash \\ s\_SELINUX=enforcing\_SELINUX=permissive\_ \textbackslash \\ /etc/selinux/config}}}
+ 
+ \item Both \emph{Oracle JRE 1.7} and \emph{Apache Hadoop 1.0.4} were downloaded ---AMD64 and rpm packages---, installed and configured in the VM.
+ \item Right afterwards, an \texttt{hduser} was added to \texttt{hadoop} as primary group by typing:
+ 
+   \fbox{\texttt{\parbox[c][2.6em][c]{0.385\textwidth}{sudo useradd -g hadoop hduser \\ sudo passwd hduser}}}
+ 
+ \item \texttt{sshd} was set to disallow either \texttt{root} user connections or the tuple (user, password) as credentials, to effectively limit SSH tunnels to those authorized with (public, private) keypair collations. By using this approach, only the user spawning a virtual cluster would have access to its instances, provided he or she remained the sole acquaintances with the \emph{OpenStack}-injected private keypair.
+ 
+   \fbox{\texttt{\parbox[c][10.8em][c]{0.385\textwidth}
+   {sudo sed -i \textbackslash \\
+   s\_\textasciicircum \#PermitRootLogin\textbackslash \ \textbackslash \\
+   yes.*\_PermitRootLogin\textbackslash \ no\_ \textbackslash \\
+   /etc/ssh/sshd\_config \\
+   sudo sed -i \textbackslash \\
+   s\_\textasciicircum PasswordAuthentication\textbackslash \ \textbackslash \\
+   yes.*\_PasswordAuthentication\textbackslash \ no\_ \textbackslash \\
+   /etc/ssh/sshd\_config \\
+   sudo rm -rf /home/hduser/.ssh \\
+   sudo rm -f /etc/ssh\_host*}}}
+   
+ \item Three scripts were written (refer to appendix \ref{sec:apx})
+   
+\end{itemize}
+
+
+
+\subsection{Interface}
+\noindent Figure \ref{fig:interface} represents the user interface's modular composition. There are three essential modules within:
+
+\begin{figure}[tbp]
+\centering
+\includegraphics[width=0.45\textwidth]{img/003}
+\caption{Interface composition}
+\label{fig:interface}
+\end{figure}
+
+\begin{description}
+ \item[Compute] is the REST access client that bridges the \emph{OpenStack} cloud with the web interface, effectively decoupling \emph{qosh} from the infrastructure provider. It basically encapsulates a series of methods by which an authorized user would be allowed to manually define the deployment of VMs.
+ \item[Fabric] is a \emph{Python} library used to simplify managing our virtual cluster by establishing SSH tunnels with the VMs, letting \emph{qosh} shape \emph{Hadoop} configuration, put processing data into HDFS ---Hadoop Distributed File System--- and recover results to user space.
+ \item[Django] glues together both modules, renders HTML to be displayed to the user and organizes result and metadata storage.
+\end{description}
+
+
+
+
+
+
+\section{Execution}
+
+\bibliographystyle{abbrv}
+\bibliography{qosh-paper}
+
+\appendix
+
+\section{Cloud-init scripts}\label{sec:apx}
+\lstset{
+  captionpos=b,
+  frame=none,
+  language=bash,
+  numbers=none,
+  showspaces=false,
+  showstringspaces=false
+}
+\begin{lstlisting}[caption=cloud-init, label=src:init]
+#!/bin/sh
+#
+#
+# Simple cloud-init script to fetch the meta-data injected into instances
+
+fetch_and_set() {
+
+  response_code="$(curl -sI http://169.254.169.254/1.0/meta-data/hostname | grep HTTP | awk {'print $2'})"
+  
+  if [ "$response_code" == "200" ]
+  then
+    new_hostname="$(curl -s http://169.254.169.254/1.0/meta-data/hostname)"
+    sed -i 's/'"$HOSTNAME"'/'"$new_hostname"'/g' /etc/hosts /etc/sysconfig/network
+    HOSTNAME=$new_hostname
+    hostname $new_hostname
+  fi
+  
+  response_code="$(curl -sI http://169.254.169.254/latest/meta-data/public-keys/0/openssh-key | grep HTTP | awk {'print $2'})"
+
+  if [ "$response_code" == "200" ]
+  then
+    rm -rf /home/hduser/.ssh
+    mkdir -p /home/hduser/.ssh
+
+    curl -s http://169.254.169.254/latest/meta-data/public-keys/0/openssh-key | grep 'ssh-rsa' >> /home/hduser/.ssh/authorized_keys
+    chown -R hduser:hadoop /home/hduser/.ssh
+    echo -e "\nAUTHORIZED_KEYS:"
+    echo "************************"
+    cat /home/hduser/.ssh/authorized_keys
+    echo "************************"
+  fi
+
+}
+
+# Change hostname to match meta-data instance name if found
+#
+http_response_code="$(curl -sI http://169.254.169.254/1.0/ | grep HTTP | awk {'print $2'})"
+
+[ "$http_response_code" != "200" ] && echo -e "\nWARNING: No meta-data found!\n" && exit 1
+
+fetch_and_set
+\end{lstlisting}
+
+\begin{lstlisting}[caption=cloud-prenet, label=src:pre]
+#!/bin/sh
+#
+# Custom script to control pre network
+# initialization of cloud behaviour
+#
+# Remove ssh Keys DSA, RSA & HOST
+rm -f /etc/ssh/*host*
+
+# Remove persistent-net-rules
+rm -f /etc/udev/rules.d/70-persistent-net.rules
+
+# Remove history
+rm -f /home/hduser/.bash_history /root/.bash_history
+\end{lstlisting}
+
+\begin{lstlisting}[caption=cloud-shtdwn, label=src:shtdwn]
+#!/bin/sh
+# Remove ssh Keys DSA, RSA & HOST
+rm -f /etc/ssh/*host*
+
+# Remove ssh authorized_keys
+rm -f /root/.ssh/authorized_keys /home/hduser/.ssh/authorized_keys
+
+# Remove persistent-net-rules
+rm -f /etc/udev/rules.d/70-persistent-net.rules
+
+# Remove history
+rm -f /home/hduser/.bash_history /root/.bash_history
+
+# Remove hadoop logs
+rm -rf /var/log/hadoop/hduser
+
+# Clear some system logs
+for file in $(ls -F /var/log | grep -ve "/$")
+do
+  echo > /var/log/$file
+done
+\end{lstlisting}
+
+
+
+\end{document}
