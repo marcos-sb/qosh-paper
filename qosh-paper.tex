@@ -2,7 +2,7 @@
 \usepackage[utf8]{inputenc}
 \usepackage{graphics}
 \usepackage{hyperref}
-\usepackage{listings}
+
 
 \begin{document}
 %opening
@@ -133,33 +133,84 @@ The \emph{Apache Hadoop} installation has been manually configured from scratch 
 
 \begin{itemize}
  \item After a clean Fedora 17 installation, \texttt{yum} was employed to add the \emph{Virtual Machine Manager} (\texttt{virt-manager}) package which would be exerted to sketch the VM. Along with it, \texttt{libvirt}, \texttt{kvm} and \texttt{qemu} were also installed.
- \item Using \texttt{virt-manager} a VM was spawned anew with 1 VCPU, 1 GB RAM and 4 GB HDD.
+ 
+ \item Using \texttt{virt-manager} a VM was spawned anew with 1 VCPU, 1 GB RAM and 4 GB qcow2 HDD.
+ 
  \item A \emph{CentOS 6.3} network installation image was booted inside the VM, choosing \emph{Basic Server} as set of packages to be configured within a single \emph{ext4}-formatted partition without LVM.
+ 
  \item Once completed and self-restarted, the system was updated and \emph{SELinux} relaxed to be \emph{permissive} by issuing:
  
-   \fbox{\texttt{\parbox[c][5.6em][c]{0.385\textwidth}{sudo yum update -y \\ sudo setenforce 0 \\ sudo sed -i \textbackslash \\ s\_SELINUX=enforcing\_SELINUX=permissive\_ \textbackslash \\ /etc/selinux/config}}}
+ \begin{verbatim}
+[guest]$ sudo yum update -y
+[guest]$ sudo setenforce 0
+[guest]$ sudo sed -i \
+s_SELINUX=enforcing_SELINUX=permissive_ \
+/etc/selinux/config
+ \end{verbatim}
  
  \item Both \emph{Oracle JRE 1.7} and \emph{Apache Hadoop 1.0.4} were downloaded ---AMD64 and rpm packages---, installed and configured in the VM.
+ 
  \item Right afterwards, an \texttt{hduser} was added to \texttt{hadoop} as primary group by typing:
  
-   \fbox{\texttt{\parbox[c][2.6em][c]{0.385\textwidth}{sudo useradd -g hadoop hduser \\ sudo passwd hduser}}}
- 
+ \begin{verbatim}
+[guest]$ sudo useradd -g hadoop hduser
+[guest]$ sudo passwd hduser
+ \end{verbatim}
+
  \item \texttt{sshd} was set to disallow either \texttt{root} user connections or the tuple (user, password) as credentials, to effectively limit SSH tunnels to those authorized with (public, private) keypair collations. By using this approach, only the user spawning a virtual cluster would have access to its instances, provided he or she remained the sole acquaintances with the \emph{OpenStack}-injected private keypair.
  
-   \fbox{\texttt{\parbox[c][10.8em][c]{0.385\textwidth}
-   {sudo sed -i \textbackslash \\
-   s\_\textasciicircum \#PermitRootLogin\textbackslash \ \textbackslash \\
-   yes.*\_PermitRootLogin\textbackslash \ no\_ \textbackslash \\
-   /etc/ssh/sshd\_config \\
-   sudo sed -i \textbackslash \\
-   s\_\textasciicircum PasswordAuthentication\textbackslash \ \textbackslash \\
-   yes.*\_PasswordAuthentication\textbackslash \ no\_ \textbackslash \\
-   /etc/ssh/sshd\_config \\
-   sudo rm -rf /home/hduser/.ssh \\
-   sudo rm -f /etc/ssh\_host*}}}
+   \begin{verbatim}
+[guest]\$ sudo sed -i \
+s_^#PermitRootLogin\ yes.*_\
+PermitRootLogin\ no_ /etc/ssh/sshd_config
+[guest]\$ sudo sed -i \
+s_^PasswordAuthentication\ yes.*_\
+PasswordAuthentication\ no_ \
+/etc/ssh/sshd_config
+[guest]\$ sudo rm -rf /home/hduser/.ssh
+[guest]\$ sudo rm -f /etc/ssh_host*
+   \end{verbatim}
    
- \item Three scripts were written (refer to appendix \ref{sec:apx})
+ \item Three scripts were written (refer to appendix \ref{sec:apx}) and placed in \texttt{/etc/init.d/} to convey user configuration to the VM and to secure access.
+ 
+ \item With \texttt{yum groups}, unused sets of services and applications ---like \texttt{Xserver}--- were removed from the system in order to trim its size and memory footprint.
+ 
+ \item Subsequently, the qcow2 HDD image was packed in two steps. Initially, the beginning offset of the partition was trimmed by exposing only this partition \texttt{qemu-nbd} and dumping its contents to a new image. Then, a long zero-file was generated to fill up all the remaining free space in the image, so that \texttt{qemu-nbd} be adequately executed to do the real compressing. Once \texttt{qemu-img} had completed processing, the image file in the host system was neatly compressed but the image's file system reported no free space, clogged up with the zero-file that had to be removed.
+ 
+   \begin{verbatim}
+[host]$ sudo modprobe nbd max_part=8
+[host]$ sudo qemu-nbd -c /dev/nbd0 \
+-P 1 original.qcow2
+[host]$ dd if=/dev/nbd0 of=trimmed.qcow2
+[host]$ sudo qemu-nbd -d /dev/nbd0
+
+[host]$ sudo qemu-nbd -c /dev/nbd0 \
+trimmed.qcow2
+[host]$ sudo mkdir /mnt/img
+[host]$ sudo mount /dev/nbd0 /mnt/img
+[host]$ sudo dd if=/dev/zero \
+of=/mnt/img/root/zeros bs=1M count=4K
+[host]$ sudo umount /mnt/img
+[host]$ sudo qemu-nbd -d /dev/nbd0
+[host]$ qemu-img convert -c -p -f qcow2 \
+-O qcow2 trimmed.qcow2 compacted.qcow2
+
+[host]$ sudo qemu-nbd -c /dev/nbd0 \
+compacted.qcow2
+[host]$ sudo mount /dev/nbd0 /mnt/img
+[host]$ sudo rm -f /mnt/img/root/zeros
+   \end{verbatim}
    
+ \item Lastly, both \emph{initram} and \emph{kernel} were copied out to the host machine and \texttt{nbd0} disconnected.
+ 
+ \begin{verbatim}
+[host]$ sudo cp /mnt/img/boot/initramfs\
+$(uname -r).img
+/mnt/img/boot/vmlinuz$(uname -r) .
+[host]$ sudo umount /mnt/img
+[host]$ sudo qemu-nbd -d /dev/nbd0
+ \end{verbatim}
+
 \end{itemize}
 
 
@@ -193,40 +244,68 @@ The \emph{Apache Hadoop} installation has been manually configured from scratch 
 \appendix
 
 \section{Cloud-init scripts}\label{sec:apx}
-\lstset{
-  captionpos=b,
-  frame=none,
-  language=bash,
-  numbers=none,
-  showspaces=false,
-  showstringspaces=false
-}
-\begin{lstlisting}[caption=cloud-init, label=src:init]
+\subsection{cloud-prenet.sh}
+
+\begin{verbatim}
+#!/bin/sh
+#
+# Custom script to control pre-network
+# initialization
+#
+# Remove ssh Keys DSA, RSA & HOST
+rm -f /etc/ssh/*host*
+
+# Remove persistent-net-rules
+rm -f /etc/udev/rules.d/70-persistent-net.rules
+
+# Remove history
+rm -f /home/hduser/.bash_history\
+ /root/.bash_history
+\end{verbatim}
+
+
+\subsection{cloud-init.sh}
+
+\begin{verbatim}
 #!/bin/sh
 #
 #
-# Simple cloud-init script to fetch the meta-data injected into instances
+# Simple cloud-init script to fetch
+# meta-data injected into instances
 
 fetch_and_set() {
 
-  response_code="$(curl -sI http://169.254.169.254/1.0/meta-data/hostname | grep HTTP | awk {'print $2'})"
+  response_code="$(\
+   curl -sI http://169.254.169.254/1.0/\
+   meta-data/hostname | grep HTTP\
+   | awk {'print $2'})"
   
   if [ "$response_code" == "200" ]
   then
-    new_hostname="$(curl -s http://169.254.169.254/1.0/meta-data/hostname)"
-    sed -i 's/'"$HOSTNAME"'/'"$new_hostname"'/g' /etc/hosts /etc/sysconfig/network
+    new_hostname="$(\
+     curl -s http://169.254.169.254/1.0/\
+     meta-data/hostname)"
+    sed -i 's/'"$HOSTNAME"'/'"$new_hostname"\
+     '/g' /etc/hosts /etc/sysconfig/network
     HOSTNAME=$new_hostname
     hostname $new_hostname
   fi
   
-  response_code="$(curl -sI http://169.254.169.254/latest/meta-data/public-keys/0/openssh-key | grep HTTP | awk {'print $2'})"
+  response_code="$(\
+   curl -sI http://169.254.169.254/1.0/\
+   meta-data/public-keys/0/openssh-key\
+   | grep HTTP | awk {'print $2'})"
 
   if [ "$response_code" == "200" ]
   then
     rm -rf /home/hduser/.ssh
     mkdir -p /home/hduser/.ssh
 
-    curl -s http://169.254.169.254/latest/meta-data/public-keys/0/openssh-key | grep 'ssh-rsa' >> /home/hduser/.ssh/authorized_keys
+    curl -s http://169.254.169.254/1.0/\
+     meta-data/public-keys/0/openssh-key\
+     | grep 'ssh-rsa' >> \
+     /home/hduser/.ssh/authorized_keys
+    
     chown -R hduser:hadoop /home/hduser/.ssh
     echo -e "\nAUTHORIZED_KEYS:"
     echo "************************"
@@ -236,55 +315,49 @@ fetch_and_set() {
 
 }
 
-# Change hostname to match meta-data instance name if found
+# Change hostname to match meta-data
+# instance name if found
 #
-http_response_code="$(curl -sI http://169.254.169.254/1.0/ | grep HTTP | awk {'print $2'})"
+http_response_code="$(\
+ curl -sI http://169.254.169.254/1.0/\
+ | grep HTTP | awk {'print $2'})"
 
-[ "$http_response_code" != "200" ] && echo -e "\nWARNING: No meta-data found!\n" && exit 1
+[ "$http_response_code" != "200" ] && \
+echo -e "\nWARNING: No meta-data found!\n"\
+ && exit 1
 
 fetch_and_set
-\end{lstlisting}
+\end{verbatim}
 
-\begin{lstlisting}[caption=cloud-prenet, label=src:pre]
-#!/bin/sh
-#
-# Custom script to control pre network
-# initialization of cloud behaviour
-#
-# Remove ssh Keys DSA, RSA & HOST
-rm -f /etc/ssh/*host*
 
-# Remove persistent-net-rules
-rm -f /etc/udev/rules.d/70-persistent-net.rules
+\subsection{cloud-shtdwn.sh}
 
-# Remove history
-rm -f /home/hduser/.bash_history /root/.bash_history
-\end{lstlisting}
-
-\begin{lstlisting}[caption=cloud-shtdwn, label=src:shtdwn]
+\begin{verbatim}
 #!/bin/sh
 # Remove ssh Keys DSA, RSA & HOST
 rm -f /etc/ssh/*host*
 
 # Remove ssh authorized_keys
-rm -f /root/.ssh/authorized_keys /home/hduser/.ssh/authorized_keys
+rm -f /root/.ssh/authorized_keys\
+ /home/hduser/.ssh/authorized_keys
 
 # Remove persistent-net-rules
-rm -f /etc/udev/rules.d/70-persistent-net.rules
+rm -f /etc/udev/rules.d/\
+70-persistent-net.rules
 
 # Remove history
-rm -f /home/hduser/.bash_history /root/.bash_history
+rm -f /home/hduser/.bash_history\
+ /root/.bash_history
 
 # Remove hadoop logs
 rm -rf /var/log/hadoop/hduser
 
 # Clear some system logs
-for file in $(ls -F /var/log | grep -ve "/$")
+for file in $(ls -F /var/log |grep -ve "/$")
 do
   echo > /var/log/$file
 done
-\end{lstlisting}
-
+\end{verbatim}
 
 
 \end{document}
