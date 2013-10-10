@@ -89,12 +89,12 @@ Inasmuch as \emph{MapReduce} and \emph{Cloud Computing} together may prove usefu
 
 The major contribution of this work is a simple and unified interface to manage \emph{MapReduce} computations, leveraging any existing \emph{IaaS} deployment with a little customization, while providing an automatic one node test installation based on \emph{OpenStack} and \emph{Apache Hadoop}. We have called our implementation \emph{qosh} and it has been written in \emph{Python}.
 
-Section \ref{sec:arch} details \emph{qosh}'s architecture and self-installing deployment structure.
+Section \ref{sec:arch} details \emph{qosh}'s architecture and self-installing deployment structure ----------------------------------------------.
 
 
 
 \section{Architecture}\label{sec:arch}
-\noindent \emph{qosh}'s setup defaults to a single node installation in which both infrastructure and execution environment is configured. Figure \ref{fig:arch1} precisely depicts the layered configuration. Atop Fedora 17 our setup script downloads and installs \emph{OpenStack} precompiled packages, and afterwards it downloads, untars and registers a virtual machine image containing an \emph{Oracle 1.7 JRE} and \emph{Apache Hadoop 1.0.4} installation. Likewise, it automatically creates the right user and tenant so that \emph{qosh} may be put to use straightaway.
+\noindent \emph{qosh}'s setup defaults to a single node installation in which both infrastructure and execution environment are configured. Figure \ref{fig:arch1} precisely depicts the layered configuration. Atop Fedora 17 our setup script downloads and installs \emph{OpenStack} precompiled packages, and afterwards it downloads, untars and registers a virtual machine image containing an \emph{Oracle 1.7 JRE} and \emph{Apache Hadoop 1.0.4} installation. Likewise, it automatically creates the right user and tenant so that \emph{qosh} may be put to use straightaway.
 
 \begin{figure}[tbp]
 \centering
@@ -103,11 +103,13 @@ Section \ref{sec:arch} details \emph{qosh}'s architecture and self-installing de
 \label{fig:arch1}
 \end{figure}
 
+
+
 At the right end of Figure \ref{fig:arch1}, it appears an \emph{Interface} module lying on top of Fedora and being connected to both \emph{OpenStack} and \emph{Apache Hadoop}. Its main purpose is to deploy virtual \emph{Hadoop} clusters, to manage its component virtual machines' ---or \emph{VM}s--- lifecycles and to orchestrate \emph{MapReduce} workflows executions.
 
 
 
-\subsection{Initial deployment}
+\subsection{Initial setup}
 \noindent \emph{qosh}'s own installation script will automatically configure a highly-performing testing environment that could be easily scaled-out as demand grows. Figure \ref{fig:initial} represents the layered setup decomposition in a single node after the installation procedure had finished.
 
 \begin{figure}[tbp]
@@ -138,16 +140,33 @@ Which implies that no fault tolerance measures are defined ---as expected from a
 \label{fig:interface}
 \end{figure}
 
-\begin{description}
- \item[Compute] is the REST access client that bridges the \emph{OpenStack} cloud with the web interface, effectively decoupling \emph{qosh} from the infrastructure provider. It basically encapsulates a series of methods by which an authorized user would be allowed to manually define the deployment of VMs.
- \item[Fabric] is a \emph{Python} library used to simplify managing our virtual cluster by establishing SSH tunnels with the VMs, letting \emph{qosh} shape \emph{Hadoop} configuration, put processing data into HDFS ---Hadoop Distributed File System--- and recover results to user space.
- \item[Django] glues together both modules, renders HTML to be displayed to the user and organizes result and metadata storage.
-\end{description}
 
+\subsubsection{Compute}
+\noindent \emph{Compute} is the REST access client that bridges the \emph{OpenStack} cloud with the web interface, effectively decoupling \emph{qosh} from the infrastructure provider. It basically encapsulates a series of methods by which an authorized user is allowed to manually define VM deployment behavior.
+
+Current implementation manages virtual clusters defined with \emph{OpenStack} running on a single real cluster, i. e. no hybrid clouds are supported. However, \emph{Compute} may be effortlessly adapted to handle VMs running on other IaaS deployments or to manage hybrid clouds, with no interaction whatsoever with another module as far as \emph{qosh} API semantics are preserved.
+
+
+\subsubsection{Fabric}
+\noindent \emph{Fabric} is a \emph{Python} library used to simplify managing our virtual cluster by establishing SSH tunnels with the VMs, letting \emph{qosh} shape \emph{Hadoop} configuration, put processing data into HDFS ---Hadoop Distributed File System--- and recover results to user space; everything as SSH traffic.
+
+To establish SSH connections our \emph{Fabric} module is fed a \emph{Keystone}-generated keypair. This keypair is created on each virtual cluster deployment and shared by all VMs in the same cluster. Its private part is injected into VMs once they have finished booting (refer to section \ref{subsec:initsh} for an implementation), and its public part is kept on the local file system. It is automatically removed ---both from \emph{OpenStack} and file system--- when \emph{Apache Hadoop} execution completes.
+
+
+\subsubsection{Django}
+\noindent \emph{Django} glues together both modules, renders HTML to be displayed to the user and organizes result and metadata storage.------------------------------------------------------------
+
+Putting it all together, a user would define \emph{MapReduce} computations though a Django-backed web interface. Django would pass configuration parameters on to \emph{Fabric} for creating and feeding input data to a virtual \emph{Hadoop} cluster. And lastly, real infrastructure would be provisioned by an IaaS cloud driven through \emph{Compute} module.
+
+
+\subsection{Deployment}
+\noindent \emph{qosh}'s installation script will take care of a single node deployment in an automatic fashion, so no previous knowledge of \emph{OpenStack} or \emph{Hadoop} would be required to exploit \emph{qosh}'s elastic \emph{MapReduce} prowess in this case; though the virtual cluster's \emph{elasticity} would be heavily constrained. To overcome this limitation, \emph{qosh} has been architected to abstract the infrastructure underneath allowing for any IaaS framework to be deployed at any size ---\emph{Compute} module's parts should require rewriting, nonetheless, if \emph{OpenStack} were not chosen.
+
+An installation may be grown from a starting single node setup just by laying out a real IaaS cloud cluster of any size. In fact, any public cloud \emph{Amazon Elastic Compute Cloud}-compatible (EC2-compatible) could be used to expose infrastructure that \emph{qosh} would utilize to spawn virtual clusters of any size.
 
 
 \section{Apache Hadoop Virtual Machine}
-\noindent The \emph{Apache Hadoop} installation has been manually configured from scratch inside a virtual machine, in such a way that it could be run on top of any \emph{Amazon Elastic Compute Cloud} (EC2) compatible \emph{IaaS} service, with no theoretical limit to horizontal or vertical scaling. What follows is the procedure carried out to yield the VM image.
+\noindent The \emph{Apache Hadoop} installation has been manually configured from scratch inside a virtual machine. What follows is the procedure carried out to yield the VM image.
 
 \begin{itemize}
  \item After a clean Fedora 17 installation, \texttt{yum} was employed to add the \emph{Virtual Machine Manager} (\texttt{virt-manager}) package which would be exerted to sketch the VM. Along with it, \texttt{libvirt}, \texttt{kvm} and \texttt{qemu} were also installed.
@@ -168,12 +187,7 @@ s_SELINUX=enforcing_SELINUX=permissive_ \
  
  \item Both \emph{Oracle JRE 1.7} and \emph{Apache Hadoop 1.0.4} were downloaded ---AMD64 and rpm packages---, installed and configured in the VM.
  
- \item Right afterwards, an \texttt{hduser} was added to \texttt{hadoop} as primary group by typing:
- 
- \begin{verbatim}
-[guest]$ sudo useradd -g hadoop hduser
-[guest]$ sudo passwd hduser
- \end{verbatim}
+ \item Right afterwards, an \texttt{hduser} was added with \texttt{hadoop} as primary group.
 
  \item \texttt{sshd} was set to disallow either \texttt{root} user connections or the tuple (user, password) as credentials, to effectively limit SSH tunnels to those authorized with (public, private) keypair collations. By using this approach, only the user spawning a virtual cluster would have access to its instances, provided he or she remained the sole acquaintances with the \emph{OpenStack}-injected private keypair.
  
@@ -193,7 +207,7 @@ PasswordAuthentication\ no_ \
  
  \item With \texttt{yum groups}, unused sets of services and applications ---like \texttt{Xserver}--- were removed from the system in order to trim its size and memory footprint.
  
- \item Subsequently, the qcow2 HDD image was packed in two steps. Initially, the beginning offset of the partition inside the image was trimmed by exposing only that partition with \texttt{qemu-nbd}. Right afterwards, its contents were dumped into a new partitionless image. Then, a long zero-file was generated to fill up all the remaining free space in the image, so that \texttt{qemu-nbd} be adequately executed to do the real compressing. Once \texttt{qemu-img} had completed processing, the image file in the host system was neatly compressed but the image's file system reported no free space, clogged up with the zero-file that had to be manually removed.
+ \item Subsequently, the qcow2 HDD image was packed in two steps. Initially, the beginning offset of the partition inside the image was trimmed by exposing only that partition with \texttt{qemu-nbd}. Right afterwards, its contents were dumped into a new partitionless image. Then, a long zero-file was generated to fill up all the remaining free space in the image, so that \texttt{qemu-img} be adequately executed to do the real compressing. Once \texttt{qemu-img} had completed processing, the image file in the host system was neatly compressed but the image's file system reported no free space, clogged up with the zero-file that had to be manually removed.
  
    \begin{verbatim}
 [host]$ sudo modprobe nbd max_part=8
@@ -277,7 +291,7 @@ rm -f /home/hduser/.bash_history\
 \end{verbatim}
 
 
-\subsection{cloud-init.sh}
+\subsection{cloud-init.sh}\label{subsec:initsh}
 
 \begin{verbatim}
 #!/bin/sh
