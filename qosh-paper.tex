@@ -128,8 +128,26 @@ The \emph{OpenStack} modules deployed are those fundamentally required by a mini
 Which implies that no fault tolerance measures are defined ---as expected from a single node and local file system arrangement--- cloud-wise, but it certainly allows for other standard safety protocols to be implemented ---on the order of some RAID level with replication or UPS solutions.
 
 
-\subsection{Apache Hadoop Virtual Machine}
-The \emph{Apache Hadoop} installation has been manually configured from scratch inside a virtual machine, in such a way that it could be run on top of any \emph{Amazon Elastic Compute Cloud} (EC2) compatible \emph{IaaS} service, with no theoretical limit to horizontal or vertical scaling. What follows is the procedure carried out to yield the VM image.
+\subsection{Interface}
+\noindent Figure \ref{fig:interface} represents the user interface's modular composition. There are three essential modules within:
+
+\begin{figure}[tbp]
+\centering
+\includegraphics[width=0.45\textwidth]{img/003}
+\caption{Interface composition}
+\label{fig:interface}
+\end{figure}
+
+\begin{description}
+ \item[Compute] is the REST access client that bridges the \emph{OpenStack} cloud with the web interface, effectively decoupling \emph{qosh} from the infrastructure provider. It basically encapsulates a series of methods by which an authorized user would be allowed to manually define the deployment of VMs.
+ \item[Fabric] is a \emph{Python} library used to simplify managing our virtual cluster by establishing SSH tunnels with the VMs, letting \emph{qosh} shape \emph{Hadoop} configuration, put processing data into HDFS ---Hadoop Distributed File System--- and recover results to user space.
+ \item[Django] glues together both modules, renders HTML to be displayed to the user and organizes result and metadata storage.
+\end{description}
+
+
+
+\section{Apache Hadoop Virtual Machine}
+\noindent The \emph{Apache Hadoop} installation has been manually configured from scratch inside a virtual machine, in such a way that it could be run on top of any \emph{Amazon Elastic Compute Cloud} (EC2) compatible \emph{IaaS} service, with no theoretical limit to horizontal or vertical scaling. What follows is the procedure carried out to yield the VM image.
 
 \begin{itemize}
  \item After a clean Fedora 17 installation, \texttt{yum} was employed to add the \emph{Virtual Machine Manager} (\texttt{virt-manager}) package which would be exerted to sketch the VM. Along with it, \texttt{libvirt}, \texttt{kvm} and \texttt{qemu} were also installed.
@@ -160,22 +178,22 @@ s_SELINUX=enforcing_SELINUX=permissive_ \
  \item \texttt{sshd} was set to disallow either \texttt{root} user connections or the tuple (user, password) as credentials, to effectively limit SSH tunnels to those authorized with (public, private) keypair collations. By using this approach, only the user spawning a virtual cluster would have access to its instances, provided he or she remained the sole acquaintances with the \emph{OpenStack}-injected private keypair.
  
    \begin{verbatim}
-[guest]\$ sudo sed -i \
+[guest]$ sudo sed -i \
 s_^#PermitRootLogin\ yes.*_\
 PermitRootLogin\ no_ /etc/ssh/sshd_config
-[guest]\$ sudo sed -i \
+[guest]$ sudo sed -i \
 s_^PasswordAuthentication\ yes.*_\
 PasswordAuthentication\ no_ \
 /etc/ssh/sshd_config
-[guest]\$ sudo rm -rf /home/hduser/.ssh
-[guest]\$ sudo rm -f /etc/ssh_host*
+[guest]$ sudo rm -rf /home/hduser/.ssh
+[guest]$ sudo rm -f /etc/ssh_host*
    \end{verbatim}
    
  \item Three scripts were written (refer to appendix \ref{sec:apx}) and placed in \texttt{/etc/init.d/} to convey user configuration to the VM and to secure access.
  
  \item With \texttt{yum groups}, unused sets of services and applications ---like \texttt{Xserver}--- were removed from the system in order to trim its size and memory footprint.
  
- \item Subsequently, the qcow2 HDD image was packed in two steps. Initially, the beginning offset of the partition was trimmed by exposing only this partition \texttt{qemu-nbd} and dumping its contents to a new image. Then, a long zero-file was generated to fill up all the remaining free space in the image, so that \texttt{qemu-nbd} be adequately executed to do the real compressing. Once \texttt{qemu-img} had completed processing, the image file in the host system was neatly compressed but the image's file system reported no free space, clogged up with the zero-file that had to be removed.
+ \item Subsequently, the qcow2 HDD image was packed in two steps. Initially, the beginning offset of the partition inside the image was trimmed by exposing only that partition with \texttt{qemu-nbd}. Right afterwards, its contents were dumped into a new partitionless image. Then, a long zero-file was generated to fill up all the remaining free space in the image, so that \texttt{qemu-nbd} be adequately executed to do the real compressing. Once \texttt{qemu-img} had completed processing, the image file in the host system was neatly compressed but the image's file system reported no free space, clogged up with the zero-file that had to be manually removed.
  
    \begin{verbatim}
 [host]$ sudo modprobe nbd max_part=8
@@ -204,9 +222,9 @@ compacted.qcow2
  \item Lastly, both \emph{initram} and \emph{kernel} were copied out to the host machine and \texttt{nbd0} disconnected.
  
  \begin{verbatim}
-[host]$ sudo cp /mnt/img/boot/initramfs\
+[host]$ sudo cp /mnt/img/boot/initramfs-\
 $(uname -r).img
-/mnt/img/boot/vmlinuz$(uname -r) .
+/mnt/img/boot/vmlinuz-$(uname -r)
 [host]$ sudo umount /mnt/img
 [host]$ sudo qemu-nbd -d /dev/nbd0
  \end{verbatim}
@@ -215,28 +233,23 @@ $(uname -r).img
 
 
 
-\subsection{Interface}
-\noindent Figure \ref{fig:interface} represents the user interface's modular composition. There are three essential modules within:
-
-\begin{figure}[tbp]
-\centering
-\includegraphics[width=0.45\textwidth]{img/003}
-\caption{Interface composition}
-\label{fig:interface}
-\end{figure}
-
-\begin{description}
- \item[Compute] is the REST access client that bridges the \emph{OpenStack} cloud with the web interface, effectively decoupling \emph{qosh} from the infrastructure provider. It basically encapsulates a series of methods by which an authorized user would be allowed to manually define the deployment of VMs.
- \item[Fabric] is a \emph{Python} library used to simplify managing our virtual cluster by establishing SSH tunnels with the VMs, letting \emph{qosh} shape \emph{Hadoop} configuration, put processing data into HDFS ---Hadoop Distributed File System--- and recover results to user space.
- \item[Django] glues together both modules, renders HTML to be displayed to the user and organizes result and metadata storage.
-\end{description}
-
-
 
 
 
 
 \section{Execution}
+\noindent
+
+\begin{figure*}[tbp]
+\centering
+\includegraphics[width=0.65\textwidth]{img/006}
+\caption{Global execution flow}
+\label{fig:exflow}
+\end{figure*}
+
+
+\section{Performance}
+
 
 \bibliographystyle{abbrv}
 \bibliography{qosh-paper}
@@ -269,9 +282,9 @@ rm -f /home/hduser/.bash_history\
 \begin{verbatim}
 #!/bin/sh
 #
-#
 # Simple cloud-init script to fetch
 # meta-data injected into instances
+# in order to configure them
 
 fetch_and_set() {
 
@@ -334,6 +347,7 @@ fetch_and_set
 
 \begin{verbatim}
 #!/bin/sh
+#
 # Remove ssh Keys DSA, RSA & HOST
 rm -f /etc/ssh/*host*
 
