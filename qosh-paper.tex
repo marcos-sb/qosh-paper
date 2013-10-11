@@ -89,7 +89,7 @@ Inasmuch as \emph{MapReduce} and \emph{Cloud Computing} together may prove usefu
 
 The major contribution of this work is a simple and unified interface to manage \emph{MapReduce} computations, leveraging any existing \emph{IaaS} deployment with a little customization, while providing an automatic one node test installation based on \emph{OpenStack} and \emph{Apache Hadoop}. We have called our implementation \emph{qosh} and it has been written in \emph{Python}.
 
-Section \ref{sec:arch} details \emph{qosh}'s architecture and self-installing deployment structure ----------------------------------------------.
+Section \ref{sec:arch} details \emph{qosh}'s architecture and self-installing deployment structure. Section \ref{sec:hadvm} describes how the \emph{Apache Hadoop} virtual machine was built up. Section \ref{sec:execution} goes through a complete execution cycle, identifying key points of the process. Section \ref{sec:performance} reviews qosh performance when deployed on a real cluster. ----------------------------------------------
 
 
 
@@ -144,7 +144,7 @@ Which implies that no fault tolerance measures are defined ---as expected from a
 \subsubsection{Compute}
 \noindent \emph{Compute} is the REST access client that bridges the \emph{OpenStack} cloud with the web interface, effectively decoupling \emph{qosh} from the infrastructure provider. It basically encapsulates a series of methods by which an authorized user is allowed to manually define VM deployment behavior.
 
-Current implementation manages virtual clusters defined with \emph{OpenStack} running on a single real cluster, i. e. no hybrid clouds are supported. However, \emph{Compute} may be effortlessly adapted to handle VMs running on other IaaS deployments or to manage hybrid clouds, with no interaction whatsoever with another module as far as \emph{qosh} API semantics are preserved.
+Current implementation manages virtual clusters defined with \emph{OpenStack} running on a single real cluster, i. e. no hybrid clouds are supported. However, \emph{Compute} may be effortlessly adapted to handle VMs running on other IaaS deployments or to manage hybrid clouds, with no interaction whatsoever with another module, as far as \emph{qosh} API semantics are preserved.
 
 
 \subsubsection{Fabric}
@@ -154,18 +154,20 @@ To establish SSH connections our \emph{Fabric} module is fed a \emph{Keystone}-g
 
 
 \subsubsection{Django}
-\noindent \emph{Django} glues together both modules, renders HTML to be displayed to the user and organizes result and metadata storage.------------------------------------------------------------
+\noindent \emph{Django} glues together both modules, renders HTML to be displayed to the user and organizes result and metadata storage.
+
+\emph{Django} can be plugged different back-ends to deal with varied needs. ------------------------------------------------------------
 
 Putting it all together, a user would define \emph{MapReduce} computations though a Django-backed web interface. Django would pass configuration parameters on to \emph{Fabric} for creating and feeding input data to a virtual \emph{Hadoop} cluster. And lastly, real infrastructure would be provisioned by an IaaS cloud driven through \emph{Compute} module.
 
 
 \subsection{Deployment}
-\noindent \emph{qosh}'s installation script will take care of a single node deployment in an automatic fashion, so no previous knowledge of \emph{OpenStack} or \emph{Hadoop} would be required to exploit \emph{qosh}'s elastic \emph{MapReduce} prowess in this case; though the virtual cluster's \emph{elasticity} would be heavily constrained. To overcome this limitation, \emph{qosh} has been architected to abstract the infrastructure underneath allowing for any IaaS framework to be deployed at any size ---\emph{Compute} module's parts should require rewriting, nonetheless, if \emph{OpenStack} were not chosen.
+\noindent \emph{qosh}'s installation script will take care of a single node deployment in an automatic fashion, so no previous knowledge of \emph{OpenStack} or \emph{Hadoop} would be required to exploit \emph{qosh}'s elastic \emph{MapReduce} prowess in this case; though the virtual cluster's \emph{elasticity} would be heavily constrained. To overcome this limitation, \emph{qosh} has been architected to abstract the infrastructure underneath, allowing for any IaaS framework to be deployed at any size ---some \emph{Compute} module's parts would require rewriting, nonetheless, if \emph{OpenStack} were not used.
 
 An installation may be grown from a starting single node setup just by laying out a real IaaS cloud cluster of any size. In fact, any public cloud \emph{Amazon Elastic Compute Cloud}-compatible (EC2-compatible) could be used to expose infrastructure that \emph{qosh} would utilize to spawn virtual clusters of any size.
 
 
-\section{Apache Hadoop Virtual Machine}
+\section{Apache Hadoop Virtual Machine}\label{sec:hadvm}
 \noindent The \emph{Apache Hadoop} installation has been manually configured from scratch inside a virtual machine. What follows is the procedure carried out to yield the VM image.
 
 \begin{itemize}
@@ -251,7 +253,7 @@ $(uname -r).img
 
 
 
-\section{Execution}
+\section{Execution}\label{sec:execution}
 \noindent
 
 \begin{figure*}[tbp]
@@ -262,7 +264,7 @@ $(uname -r).img
 \end{figure*}
 
 
-\section{Performance}
+\section{Performance}\label{sec:performance}
 
 
 \bibliographystyle{abbrv}
