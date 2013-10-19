@@ -43,7 +43,7 @@ Tom\'as Fern\'andez Pena\\
 % 4th. author
 \alignauthor
 Marcos Salgueiro Balsa\\
-       \affaddr{Brookhaven Laboratories}\\
+       \affaddr{Improving Metrics}\\
        \affaddr{Brookhaven National Lab}\\
        \affaddr{P.O. Box 5000}\\
        \email{marcos.salgueiro@gmail.com}
@@ -89,11 +89,22 @@ Inasmuch as \emph{MapReduce} and \emph{Cloud Computing} together may prove usefu
 
 The major contribution of this work is a simple and unified interface to manage \emph{MapReduce} computations, leveraging any existing \emph{IaaS} deployment with a little customization, while providing an automatic one node test installation based on \emph{OpenStack} and \emph{Apache Hadoop}. We have called our implementation \emph{qosh} and it has been written in \emph{Python}.
 
-Section \ref{sec:arch} details \emph{qosh}'s architecture and self-installing deployment structure. Section \ref{sec:hadvm} describes how the \emph{Apache Hadoop} virtual machine was built up. Section \ref{sec:execution} goes through a complete execution cycle, identifying key points of the process. Section \ref{sec:performance} reviews qosh performance when deployed on a real cluster. ----------------------------------------------
+Section \ref{sec:frameworks} elaborates on current IaaS framework implementations, focusing on its highlights and drawbacks. Section \ref{sec:arch} details \emph{qosh}'s architecture and self-installing deployment structure. Section \ref{sec:execution} goes through a complete execution cycle, identifying key points of the process. Section \ref{sec:performance} reviews qosh performance when deployed on a real cluster. Section \ref{sec:conclusions} collects a  ----------------------------------------------
 
 
 
-\section{Architecture}\label{sec:arch}
+\section{IaaS cloud frameworks}\label{sec:frameworks}
+\noindent In order to abstract virtual cluster creation and destruction \emph{qosh} relies on an \emph{IaaS cloud} framework. Even though there is a good number of them, they all share a common architecture and cover a similar set of functionality with mixed maturity levels.
+
+Structurally, they are comprised of a series of modules connected together by an asynchronous message broker. Internally, they save their processing information in a database and exploit their server's hardware through the use of a hypervisor; externally, they expose their capabilities implementing a REST interface to be consumed by a demanding client.
+
+It could be argued that any listing that covers the most widely used IaaS cloud frameworks must include \emph{OpenStack}, \emph{CloudStack}, \emph{OpenNebula} or \emph{Eucalyptus}. Precisely, in order to determine which of them could couple \emph{qosh} best, a reduced installation was carried out before putting them to use.
+
+Our testing methodology considered diverse subjective magnitudes ---documentation completeness, installation complexity, modular flexibility, standardization, etc.--- to give a general view of each one of them. In the end, \emph{OpenStack} came up on top inasmuch as the latest two releases have immensely improved both its reach in real deployments and its perceived functional maturity.
+
+
+
+\section{Architecture and implementation}\label{sec:arch}
 \noindent \emph{qosh}'s setup defaults to a single node installation in which both infrastructure and execution environment are configured. Figure \ref{fig:arch1} precisely depicts the layered configuration. Atop Fedora 17 our setup script downloads and installs \emph{OpenStack} precompiled packages, and afterwards it downloads, untars and registers a virtual machine image containing an \emph{Oracle 1.7 JRE} and \emph{Apache Hadoop 1.0.4} installation. Likewise, it automatically creates the right user and tenant so that \emph{qosh} may be put to use straightaway.
 
 \begin{figure}[tbp]
@@ -156,7 +167,7 @@ To establish SSH connections our \emph{Fabric} module is fed a \emph{Keystone}-g
 \subsubsection{Django}
 \noindent \emph{Django} glues together both modules, renders HTML to be displayed to the user and organizes result and metadata storage.
 
-\emph{Django} can be plugged different back-ends to deal with varied needs. ------------------------------------------------------------
+\emph{Django} can be plugged different back-ends, from session objects managers to static file storage, to deal with varied needs and to accommodate future needs. \emph{qosh}'s plugin configuration includes: \emph{MySQL}, used as meta-information repository; the server file system, to save and retrieve \emph{MapReduce} I/O data and \emph{OpenStackBackend} to delegate to \emph{Keystone} user access and quota.
 
 Putting it all together, a user would define \emph{MapReduce} computations though a Django-backed web interface. Django would pass configuration parameters on to \emph{Fabric} for creating and feeding input data to a virtual \emph{Hadoop} cluster. And lastly, real infrastructure would be provisioned by an IaaS cloud driven through \emph{Compute} module.
 
@@ -167,94 +178,116 @@ Putting it all together, a user would define \emph{MapReduce} computations thoug
 An installation may be grown from a starting single node setup just by laying out a real IaaS cloud cluster of any size. In fact, any public cloud \emph{Amazon Elastic Compute Cloud}-compatible (EC2-compatible) could be used to expose infrastructure that \emph{qosh} would utilize to spawn virtual clusters of any size.
 
 
-\section{Apache Hadoop Virtual Machine}\label{sec:hadvm}
-\noindent The \emph{Apache Hadoop} installation has been manually configured from scratch inside a virtual machine. What follows is the procedure carried out to yield the VM image.
+\subsection{Apache Hadoop Virtual Machine}\label{subsec:hadvm}
+\noindent The \emph{Apache Hadoop} installation has been manually configured from scratch inside a virtual machine. It's been conceived to have a minimum footprint while maintaining a server-grade stability. In order to fulfill these requirements \emph{CentOS} was chosen and an EC2-compatible VM was built up with it.
+
+An EC2-compatible VM differs from a \emph{regular} VM in a few peculiarities:
+
+\begin{description}
+ \item[Container format] is really subject to framework requirements but the most commonly preferred formats are raw and qcow2 for cloud images, while traditional VMs depend exclusively on the virtualization platform support.
+ 
+ \item[User access] is controlled by injecting a private part of an ssh keypair into booting VMs, so that only users with the public counterpart are allowed to log in. However, that private part is not \emph{pushed} into the VM file system by the cloud framework itself, it is \emph{pulled} instead to a web location, concealed from other VMs, so it is the VM's duty to fetch and safeguard that keypair.
+ 
+ \item[VHDD resizing] which is the ability to change the VM's HDD size on demand, can only be accomplished if \emph{direct kernel boot} was being used. Enabling a VM image to boot a kernel directly implies extracting both initram and kernel images from the VM file system and uploading them to the particular cloud framework deployed.
+\end{description}
+
+Bearing those singularities in mind, an \emph{Apache Hadoop} and \emph{Oracle JRE} installations, a limit in what kind of SSH connections can be established ---only those authenticated by keypair--- and a final compression, together, yielded \emph{qosh}'s VM \cite{ahvm:2013:online} which has potential to be executed on any cloud distribution ---considering it being EC2-compatible.
+
+%What follows is the procedure carried out to yield the VM image.
+
+% \begin{itemize}
+%  \item After a clean Fedora 17 installation, \texttt{yum} was employed to add the \emph{Virtual Machine Manager} (\texttt{virt-manager}) package which would be exerted to sketch the VM. Along with it, \texttt{libvirt}, \texttt{kvm} and \texttt{qemu} were also installed.
+%  
+%  \item Using \texttt{virt-manager} a VM was spawned anew with 1 VCPU, 1 GB RAM and 4 GB qcow2 HDD.
+%  
+%  \item A \emph{CentOS 6.3} network installation image was booted inside the VM, choosing \emph{Basic Server} as set of packages to be configured within a single \emph{ext4}-formatted partition without LVM.
+%  
+%  \item Once completed and self-restarted, the system was updated and \emph{SELinux} relaxed to be \emph{permissive} by issuing:
+%  
+%  \begin{verbatim}
+% [guest]$ sudo yum update -y
+% [guest]$ sudo setenforce 0
+% [guest]$ sudo sed -i \
+% s_SELINUX=enforcing_SELINUX=permissive_ \
+% /etc/selinux/config
+%  \end{verbatim}
+%  
+%  \item Both \emph{Oracle JRE 1.7} and \emph{Apache Hadoop 1.0.4} were downloaded ---AMD64 and rpm packages---, installed and configured in the VM.
+%  
+%  \item Right afterwards, an \texttt{hduser} was added with \texttt{hadoop} as primary group.
+% 
+%  \item \texttt{sshd} was set to disallow either \texttt{root} user connections or the tuple (user, password) as credentials, to effectively limit SSH tunnels to those authorized with (public, private) keypair collations. By using this approach, only the user spawning a virtual cluster would have access to its instances, provided he or she remained the sole acquaintances with the \emph{OpenStack}-injected private keypair.
+%  
+%    \begin{verbatim}
+% [guest]$ sudo sed -i \
+% s_^#PermitRootLogin\ yes.*_\
+% PermitRootLogin\ no_ /etc/ssh/sshd_config
+% [guest]$ sudo sed -i \
+% s_^PasswordAuthentication\ yes.*_\
+% PasswordAuthentication\ no_ \
+% /etc/ssh/sshd_config
+% [guest]$ sudo rm -rf /home/hduser/.ssh
+% [guest]$ sudo rm -f /etc/ssh_host*
+%    \end{verbatim}
+%    
+%  \item Three scripts were written (refer to appendix \ref{sec:apx}) and placed in \texttt{/etc/init.d/} to convey user configuration to the VM and to secure access.
+%  
+%  \item With \texttt{yum groups}, unused sets of services and applications ---like \texttt{Xserver}--- were removed from the system in order to trim its size and memory footprint.
+%  
+%  \item Subsequently, the qcow2 HDD image was packed in two steps. Initially, the beginning offset of the partition inside the image was trimmed by exposing only that partition with \texttt{qemu-nbd}. Right afterwards, its contents were dumped into a new partitionless image. Then, a long zero-file was generated to fill up all the remaining free space in the image, so that \texttt{qemu-img} be adequately executed to do the real compressing. Once \texttt{qemu-img} had completed processing, the image file in the host system was neatly compressed but the image's file system reported no free space, clogged up with the zero-file that had to be manually removed.
+%  
+%    \begin{verbatim}
+% [host]$ sudo modprobe nbd max_part=8
+% [host]$ sudo qemu-nbd -c /dev/nbd0 \
+% -P 1 original.qcow2
+% [host]$ dd if=/dev/nbd0 of=trimmed.qcow2
+% [host]$ sudo qemu-nbd -d /dev/nbd0
+% 
+% [host]$ sudo qemu-nbd -c /dev/nbd0 \
+% trimmed.qcow2
+% [host]$ sudo mkdir /mnt/img
+% [host]$ sudo mount /dev/nbd0 /mnt/img
+% [host]$ sudo dd if=/dev/zero \
+% of=/mnt/img/root/zeros bs=1M count=4K
+% [host]$ sudo umount /mnt/img
+% [host]$ sudo qemu-nbd -d /dev/nbd0
+% [host]$ qemu-img convert -c -p -f qcow2 \
+% -O qcow2 trimmed.qcow2 compacted.qcow2
+% 
+% [host]$ sudo qemu-nbd -c /dev/nbd0 \
+% compacted.qcow2
+% [host]$ sudo mount /dev/nbd0 /mnt/img
+% [host]$ sudo rm -f /mnt/img/root/zeros
+%    \end{verbatim}
+%    
+%  \item Lastly, both \emph{initram} and \emph{kernel} were copied out to the host machine and \texttt{nbd0} disconnected.
+%  
+%  \begin{verbatim}
+% [host]$ sudo cp /mnt/img/boot/initramfs-\
+% $(uname -r).img
+% /mnt/img/boot/vmlinuz-$(uname -r)
+% [host]$ sudo umount /mnt/img
+% [host]$ sudo qemu-nbd -d /dev/nbd0
+%  \end{verbatim}
+% 
+% \end{itemize}
+
+
+
+
+\subsection{Execution flow}\label{subsec:execution}
+\noindent Before any MapReduce processing take place, a user should log in and navigate to \emph{Define Job} page. Figure \ref{fig:exflow} contains a visual representation of a complete execution cycle starting up from that point.
 
 \begin{itemize}
- \item After a clean Fedora 17 installation, \texttt{yum} was employed to add the \emph{Virtual Machine Manager} (\texttt{virt-manager}) package which would be exerted to sketch the VM. Along with it, \texttt{libvirt}, \texttt{kvm} and \texttt{qemu} were also installed.
+ \item When \emph{Define Job} be completely rendered, the user is presented a form to configure a new MapReduce job and its supporting virtual cluster.
  
- \item Using \texttt{virt-manager} a VM was spawned anew with 1 VCPU, 1 GB RAM and 4 GB qcow2 HDD.
+ \item In case the form be correctly filled, all of the input data and configuration parameters would be uploaded server-side.
  
- \item A \emph{CentOS 6.3} network installation image was booted inside the VM, choosing \emph{Basic Server} as set of packages to be configured within a single \emph{ext4}-formatted partition without LVM.
+ \item Once the upload have finished, a new process is spawned to manage the remaining procedure meanwhile the user is being sent back to the \emph{Home} page.
  
- \item Once completed and self-restarted, the system was updated and \emph{SELinux} relaxed to be \emph{permissive} by issuing:
- 
- \begin{verbatim}
-[guest]$ sudo yum update -y
-[guest]$ sudo setenforce 0
-[guest]$ sudo sed -i \
-s_SELINUX=enforcing_SELINUX=permissive_ \
-/etc/selinux/config
- \end{verbatim}
- 
- \item Both \emph{Oracle JRE 1.7} and \emph{Apache Hadoop 1.0.4} were downloaded ---AMD64 and rpm packages---, installed and configured in the VM.
- 
- \item Right afterwards, an \texttt{hduser} was added with \texttt{hadoop} as primary group.
-
- \item \texttt{sshd} was set to disallow either \texttt{root} user connections or the tuple (user, password) as credentials, to effectively limit SSH tunnels to those authorized with (public, private) keypair collations. By using this approach, only the user spawning a virtual cluster would have access to its instances, provided he or she remained the sole acquaintances with the \emph{OpenStack}-injected private keypair.
- 
-   \begin{verbatim}
-[guest]$ sudo sed -i \
-s_^#PermitRootLogin\ yes.*_\
-PermitRootLogin\ no_ /etc/ssh/sshd_config
-[guest]$ sudo sed -i \
-s_^PasswordAuthentication\ yes.*_\
-PasswordAuthentication\ no_ \
-/etc/ssh/sshd_config
-[guest]$ sudo rm -rf /home/hduser/.ssh
-[guest]$ sudo rm -f /etc/ssh_host*
-   \end{verbatim}
-   
- \item Three scripts were written (refer to appendix \ref{sec:apx}) and placed in \texttt{/etc/init.d/} to convey user configuration to the VM and to secure access.
- 
- \item With \texttt{yum groups}, unused sets of services and applications ---like \texttt{Xserver}--- were removed from the system in order to trim its size and memory footprint.
- 
- \item Subsequently, the qcow2 HDD image was packed in two steps. Initially, the beginning offset of the partition inside the image was trimmed by exposing only that partition with \texttt{qemu-nbd}. Right afterwards, its contents were dumped into a new partitionless image. Then, a long zero-file was generated to fill up all the remaining free space in the image, so that \texttt{qemu-img} be adequately executed to do the real compressing. Once \texttt{qemu-img} had completed processing, the image file in the host system was neatly compressed but the image's file system reported no free space, clogged up with the zero-file that had to be manually removed.
- 
-   \begin{verbatim}
-[host]$ sudo modprobe nbd max_part=8
-[host]$ sudo qemu-nbd -c /dev/nbd0 \
--P 1 original.qcow2
-[host]$ dd if=/dev/nbd0 of=trimmed.qcow2
-[host]$ sudo qemu-nbd -d /dev/nbd0
-
-[host]$ sudo qemu-nbd -c /dev/nbd0 \
-trimmed.qcow2
-[host]$ sudo mkdir /mnt/img
-[host]$ sudo mount /dev/nbd0 /mnt/img
-[host]$ sudo dd if=/dev/zero \
-of=/mnt/img/root/zeros bs=1M count=4K
-[host]$ sudo umount /mnt/img
-[host]$ sudo qemu-nbd -d /dev/nbd0
-[host]$ qemu-img convert -c -p -f qcow2 \
--O qcow2 trimmed.qcow2 compacted.qcow2
-
-[host]$ sudo qemu-nbd -c /dev/nbd0 \
-compacted.qcow2
-[host]$ sudo mount /dev/nbd0 /mnt/img
-[host]$ sudo rm -f /mnt/img/root/zeros
-   \end{verbatim}
-   
- \item Lastly, both \emph{initram} and \emph{kernel} were copied out to the host machine and \texttt{nbd0} disconnected.
- 
- \begin{verbatim}
-[host]$ sudo cp /mnt/img/boot/initramfs-\
-$(uname -r).img
-/mnt/img/boot/vmlinuz-$(uname -r)
-[host]$ sudo umount /mnt/img
-[host]$ sudo qemu-nbd -d /dev/nbd0
- \end{verbatim}
-
+ \item
 \end{itemize}
 
-
-
-
-
-
-
-\section{Execution}\label{sec:execution}
-\noindent
 
 \begin{figure*}[tbp]
 \centering
@@ -264,7 +297,13 @@ $(uname -r).img
 \end{figure*}
 
 
-\section{Performance}\label{sec:performance}
+
+\section{Performance evaluation}\label{sec:performance}
+\noindent
+
+
+\section{Conclusions and future work}\label{sec:conclusions}
+\noindent
 
 
 \bibliographystyle{abbrv}
@@ -272,122 +311,122 @@ $(uname -r).img
 
 \appendix
 
-\section{Cloud-init scripts}\label{sec:apx}
-\subsection{cloud-prenet.sh}
-
-\begin{verbatim}
-#!/bin/sh
-#
-# Custom script to control pre-network
-# initialization
-#
-# Remove ssh Keys DSA, RSA & HOST
-rm -f /etc/ssh/*host*
-
-# Remove persistent-net-rules
-rm -f /etc/udev/rules.d/70-persistent-net.rules
-
-# Remove history
-rm -f /home/hduser/.bash_history\
- /root/.bash_history
-\end{verbatim}
-
-
-\subsection{cloud-init.sh}\label{subsec:initsh}
-
-\begin{verbatim}
-#!/bin/sh
-#
-# Simple cloud-init script to fetch
-# meta-data injected into instances
-# in order to configure them
-
-fetch_and_set() {
-
-  response_code="$(\
-   curl -sI http://169.254.169.254/1.0/\
-   meta-data/hostname | grep HTTP\
-   | awk {'print $2'})"
-  
-  if [ "$response_code" == "200" ]
-  then
-    new_hostname="$(\
-     curl -s http://169.254.169.254/1.0/\
-     meta-data/hostname)"
-    sed -i 's/'"$HOSTNAME"'/'"$new_hostname"\
-     '/g' /etc/hosts /etc/sysconfig/network
-    HOSTNAME=$new_hostname
-    hostname $new_hostname
-  fi
-  
-  response_code="$(\
-   curl -sI http://169.254.169.254/1.0/\
-   meta-data/public-keys/0/openssh-key\
-   | grep HTTP | awk {'print $2'})"
-
-  if [ "$response_code" == "200" ]
-  then
-    rm -rf /home/hduser/.ssh
-    mkdir -p /home/hduser/.ssh
-
-    curl -s http://169.254.169.254/1.0/\
-     meta-data/public-keys/0/openssh-key\
-     | grep 'ssh-rsa' >> \
-     /home/hduser/.ssh/authorized_keys
-    
-    chown -R hduser:hadoop /home/hduser/.ssh
-    echo -e "\nAUTHORIZED_KEYS:"
-    echo "************************"
-    cat /home/hduser/.ssh/authorized_keys
-    echo "************************"
-  fi
-
-}
-
-# Change hostname to match meta-data
-# instance name if found
-#
-http_response_code="$(\
- curl -sI http://169.254.169.254/1.0/\
- | grep HTTP | awk {'print $2'})"
-
-[ "$http_response_code" != "200" ] && \
-echo -e "\nWARNING: No meta-data found!\n"\
- && exit 1
-
-fetch_and_set
-\end{verbatim}
-
-
-\subsection{cloud-shtdwn.sh}
-
-\begin{verbatim}
-#!/bin/sh
-#
-# Remove ssh Keys DSA, RSA & HOST
-rm -f /etc/ssh/*host*
-
-# Remove ssh authorized_keys
-rm -f /root/.ssh/authorized_keys\
- /home/hduser/.ssh/authorized_keys
-
-# Remove persistent-net-rules
-rm -f /etc/udev/rules.d/\
-70-persistent-net.rules
-
-# Remove history
-rm -f /home/hduser/.bash_history\
- /root/.bash_history
-
-# Remove hadoop logs
-rm -rf /var/log/hadoop/hduser
-
-# Clear some system logs
-for file in $(ls -F /var/log |grep -ve "/$")
-do
-  echo > /var/log/$file
-done
-\end{verbatim}
+% \section{Cloud-init scripts}\label{sec:apx}
+% \subsection{cloud-prenet.sh}
+% 
+% \begin{verbatim}
+% #!/bin/sh
+% #
+% # Custom script to control pre-network
+% # initialization
+% #
+% # Remove ssh Keys DSA, RSA & HOST
+% rm -f /etc/ssh/*host*
+% 
+% # Remove persistent-net-rules
+% rm -f /etc/udev/rules.d/70-persistent-net.rules
+% 
+% # Remove history
+% rm -f /home/hduser/.bash_history\
+% /root/.bash_history
+% \end{verbatim}
+% 
+% 
+% \subsection{cloud-init.sh}\label{subsec:initsh}
+% 
+% \begin{verbatim}
+% #!/bin/sh
+% #
+% # Simple cloud-init script to fetch
+% # meta-data injected into instances
+% # in order to configure them
+% 
+% fetch_and_set() {
+% 
+%   response_code="$(\
+%   curl -sI http://169.254.169.254/1.0/\
+%   meta-data/hostname | grep HTTP\
+%   | awk {'print $2'})"
+%   
+%   if [ "$response_code" == "200" ]
+%   then
+%     new_hostname="$(\
+%     curl -s http://169.254.169.254/1.0/\
+%     meta-data/hostname)"
+%     sed -i 's/'"$HOSTNAME"'/'"$new_hostname"\
+%     '/g' /etc/hosts /etc/sysconfig/network
+%     HOSTNAME=$new_hostname
+%     hostname $new_hostname
+%   fi
+%   
+%   response_code="$(\
+%   curl -sI http://169.254.169.254/1.0/\
+%   meta-data/public-keys/0/openssh-key\
+%   | grep HTTP | awk {'print $2'})"
+% 
+%   if [ "$response_code" == "200" ]
+%   then
+%     rm -rf /home/hduser/.ssh
+%     mkdir -p /home/hduser/.ssh
+% 
+%     curl -s http://169.254.169.254/1.0/\
+%     meta-data/public-keys/0/openssh-key\
+%     | grep 'ssh-rsa' >> \
+%     /home/hduser/.ssh/authorized_keys
+%     
+%     chown -R hduser:hadoop /home/hduser/.ssh
+%     echo -e "\nAUTHORIZED_KEYS:"
+%     echo "************************"
+%     cat /home/hduser/.ssh/authorized_keys
+%     echo "************************"
+%   fi
+% 
+% }
+% 
+% # Change hostname to match meta-data
+% # instance name if found
+% #
+% http_response_code="$(\
+% curl -sI http://169.254.169.254/1.0/\
+% | grep HTTP | awk {'print $2'})"
+% 
+% [ "$http_response_code" != "200" ] && \
+% echo -e "\nWARNING: No meta-data found!\n"\
+% && exit 1
+% 
+% fetch_and_set
+% \end{verbatim}
+% 
+% 
+% \subsection{cloud-shtdwn.sh}
+% 
+% \begin{verbatim}
+% #!/bin/sh
+% #
+% # Remove ssh Keys DSA, RSA & HOST
+% rm -f /etc/ssh/*host*
+% 
+% # Remove ssh authorized_keys
+% rm -f /root/.ssh/authorized_keys\
+% /home/hduser/.ssh/authorized_keys
+% 
+% # Remove persistent-net-rules
+% rm -f /etc/udev/rules.d/\
+% 70-persistent-net.rules
+% 
+% # Remove history
+% rm -f /home/hduser/.bash_history\
+% /root/.bash_history
+% 
+% # Remove hadoop logs
+% rm -rf /var/log/hadoop/hduser
+% 
+% # Clear some system logs
+% for file in $(ls -F /var/log |grep -ve "/$")
+% do
+%   echo > /var/log/$file
+% done
+% \end{verbatim}
 
 
 \end{document}
