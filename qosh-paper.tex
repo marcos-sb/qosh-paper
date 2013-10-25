@@ -167,7 +167,7 @@ To establish SSH connections our \emph{Fabric} module is fed a \emph{Keystone}-g
 \subsubsection{Django}
 \noindent \emph{Django} glues together both modules, renders HTML to be displayed to the user and organizes result and metadata storage.
 
-\emph{Django} can be plugged different back-ends, from session objects managers to static file storage, to deal with varied needs and to accommodate future needs. \emph{qosh}'s plugin configuration includes: \emph{MySQL}, used as meta-information repository; the server file system, to save and retrieve \emph{MapReduce} I/O data and \emph{OpenStackBackend} to delegate to \emph{Keystone} user access and quota.
+\emph{Django} can be plugged different back-ends, from session objects managers to static file storage, to deal with varying needs and to accommodate future demands. \emph{qosh}'s plugin configuration includes: \emph{MySQL}, used as meta-information repository; the server file system, to save and retrieve \emph{MapReduce} I/O data and \emph{OpenStackBackend} to delegate into \emph{Keystone} user access and quota.
 
 Putting it all together, a user would define \emph{MapReduce} computations though a Django-backed web interface. Django would pass configuration parameters on to \emph{Fabric} for creating and feeding input data to a virtual \emph{Hadoop} cluster. And lastly, real infrastructure would be provisioned by an IaaS cloud driven through \emph{Compute} module.
 
@@ -279,13 +279,23 @@ Bearing those singularities in mind, an \emph{Apache Hadoop} and \emph{Oracle JR
 \noindent Before any MapReduce processing take place, a user should log in and navigate to \emph{Define Job} page. Figure \ref{fig:exflow} contains a visual representation of a complete execution cycle starting up from that point.
 
 \begin{itemize}
- \item When \emph{Define Job} be completely rendered, the user is presented a form to configure a new MapReduce job and its supporting virtual cluster.
+ \item When \emph{Define Job} is completely rendered, the user is presented a form to configure a new MapReduce job and its supporting virtual cluster.
  
  \item In case the form be correctly filled, all of the input data and configuration parameters would be uploaded server-side.
  
- \item Once the upload have finished, a new process is spawned to manage the remaining procedure meanwhile the user is being sent back to the \emph{Home} page.
+ \item Once the upload have finished, a new process is spawned to manage the remaining procedure; meanwhile, the user is sent back to the \emph{Home} page.
  
- \item
+ \item To guarantee a fair level of privacy, an ssh keypair is created anew on each MapReduce execution. Along with it, a set of virtual machines, or instances, is started.
+ 
+ \item As the amount of time required to bring up networking on each instance varies depending on virtual and real cluster size, a mechanism to check their networking status had to be devised. In order to reduce the complexity and coupling introduced by making the instances fire a \emph{networking-ready} signal, we came up with a better option. Instead of pushing a \emph{ready} event from the VM to the cloud, the process supervising their creation is kept looping trying to establish an ssh connection to the instances, up to a certain number of attempts. To reduce the CPU overload a one second delay is set between retries.
+ 
+ \item Once every instance can be reached through ssh, a virtual \emph{Hadoop} cluster is configured following the guidelines contained in \emph{Fabric}'s script.
+ 
+ \item Through Fabric mediation, \emph{Hadoop} daemons are started on every instance, input data and workflow implementation are pushed onto HDFS and the MapReduce application is started.
+ 
+ \item When the job be finished, the results will be fetched from the virtual cluster to the local file system, where they will be permanently stored.
+ 
+ \item Lastly, the instance set is destroyed and the keypair removed from both \emph{OpenStack} and the local file system.
 \end{itemize}
 
 
