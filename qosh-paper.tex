@@ -70,14 +70,14 @@ This paper explores their potential symbiosis, in order to create a robust and s
 \section{Introduction}\label{sec:int}
 \noindent The proliferation of Internet-enabled handhelds and the continuously improving access speed, have set a background in which user services are becoming heftier ---from SQ Video yesterday to HD today and 4K tomorrow---, are being consumed throughout the day and are requiring an increasing amount of user-related data ---GPS position, locale, personal settings, filters, previous searches or purchases, connections, friends, retweets, etc.--- to take into account. It is this last trait what have been representing the biggest trouble: the \emph{class} of data packed within these services cannot be modeled by traditional standards, as it lacks a relational structure.
 
-While some argue that every miniworld may be \emph{transformed} into a Relational Model, it is the necessity to lay out the data structure before information can be saved and put to use what poses a central obstacle in making these models adapt to such a swiftly mutating data. As figure \ref{fig:trend} depicts, the gap between relational and unstructured information continues to widen, that is why there has been an explicit push off schema-driven modeling towards loosely-structured representations.
-
-\begin{figure}[tbp]
+\begin{figure}[tp]
 \centering
 \includegraphics[width=0.45\textwidth]{img/001}
 \caption{Unstructured and relational data volume evolution. Source: \emph{Cloudera Inc.}}
 \label{fig:trend}
 \end{figure}
+
+While some argue that every miniworld may be \emph{transformed} into a Relational Model, it is the necessity to lay out the data structure before information can be saved and put to use what poses a central obstacle in making these models adapt to such a swiftly mutating data. As figure \ref{fig:trend} depicts, the gap between relational and unstructured information continues to widen, that is why there has been an explicit push off schema-driven modeling towards loosely-structured representations.
 
 So, relaying on \emph{schemaless} data definition allows to better cope with unstructured information. There are still, however, two dimensions to discuss: data volume and non-uniform access distribution.
 
@@ -89,7 +89,7 @@ Inasmuch as \emph{MapReduce} and \emph{Cloud Computing} together may prove usefu
 
 The major contribution of this work is a simple and unified interface to manage \emph{MapReduce} computations, leveraging any existing \emph{IaaS} deployment with a little customization, while providing an automatic one node test installation based on \emph{OpenStack} and \emph{Apache Hadoop}. We have called our implementation \emph{qosh} and it has been written in \emph{Python}.
 
-Section \ref{sec:frameworks} elaborates on current IaaS framework implementations, focusing on its highlights and drawbacks. Section \ref{sec:arch} details \emph{qosh}'s architecture and self-installing deployment structure. Section \ref{sec:execution} goes through a complete execution cycle, identifying key points of the process. Section \ref{sec:performance} reviews qosh performance when deployed on a real cluster. Section \ref{sec:conclusions} collects a  ----------------------------------------------
+Section \ref{sec:frameworks} elaborates on current IaaS framework implementations, focusing on its highlights and drawbacks. Section \ref{sec:arch} details \emph{qosh}'s architecture and self-installing deployment structure. Section \ref{sec:execution} goes through a complete execution cycle, identifying key points of the process. Section \ref{sec:performance} reviews qosh performance when deployed on a real cluster. Section \ref{sec:conclusions} collects a reflection on \emph{qosh}'s main contributions and future development guidelines.
 
 
 
@@ -105,14 +105,17 @@ Our testing methodology considered diverse subjective magnitudes ---documentatio
 
 
 \section{Architecture and implementation}\label{sec:arch}
-\noindent \emph{qosh}'s setup defaults to a single node installation in which both infrastructure and execution environment are configured. Figure \ref{fig:arch1} precisely depicts the layered configuration. Atop Fedora 17 our setup script downloads and installs \emph{OpenStack} precompiled packages, and afterwards it downloads, untars and registers a virtual machine image containing an \emph{Oracle 1.7 JRE} and \emph{Apache Hadoop 1.0.4} installation. Likewise, it automatically creates the right user and tenant so that \emph{qosh} may be put to use straightaway.
 
-\begin{figure}[tbp]
+\begin{figure}[tp]
 \centering
 \includegraphics[width=0.45\textwidth]{img/002}
 \caption{High level design diagram}
 \label{fig:arch1}
 \end{figure}
+
+\noindent \emph{qosh}'s setup defaults to a single node installation in which both infrastructure and execution environment are configured. Figure \ref{fig:arch1} precisely depicts the layered configuration. Atop Fedora 17 our setup script downloads and installs \emph{OpenStack} precompiled packages, and afterwards it downloads, untars and registers a virtual machine image containing an \emph{Oracle 1.7 JRE} and \emph{Apache Hadoop 1.0.4} installation. Likewise, it automatically creates the right user and tenant so that \emph{qosh} may be put to use straightaway.
+
+
 
 
 
@@ -121,9 +124,10 @@ At the right end of Figure \ref{fig:arch1}, it appears an \emph{Interface} modul
 
 
 \subsection{Initial setup}
+
 \noindent \emph{qosh}'s own installation script will automatically configure a highly-performing testing environment that could be easily scaled-out as demand grows. Figure \ref{fig:initial} represents the layered setup decomposition in a single node after the installation procedure had finished.
 
-\begin{figure}[tbp]
+\begin{figure}[htp]
 \centering
 \includegraphics[width=0.45\textwidth]{img/005}
 \caption{Layered initial deployment}
@@ -144,7 +148,7 @@ Which implies that no fault tolerance measures are defined ---as expected from a
 \subsection{Interface}
 \noindent Figure \ref{fig:interface} represents the user interface's modular composition. There are three essential modules within:
 
-\begin{figure}[tbp]
+\begin{figure}[tp]
 \centering
 \includegraphics[width=0.45\textwidth]{img/003}
 \caption{Interface composition}
@@ -276,14 +280,15 @@ Bearing those singularities in mind, an \emph{Apache Hadoop} and \emph{Oracle JR
 
 
 \subsection{Execution flow}\label{subsec:execution}
-\noindent Before any MapReduce processing take place, a user should log in and navigate to \emph{Define Job} page. Figure \ref{fig:exflow} contains a visual representation of a complete execution cycle starting up from that point.
 
-\begin{figure*}[htb]
+\begin{figure*}[tp]
 \centering
 \includegraphics[width=0.65\textwidth]{img/006}
 \caption{Global execution flow}
 \label{fig:exflow}
 \end{figure*}
+
+\noindent Before any MapReduce processing take place, a user should log in and navigate to \emph{Define Job} page. Figure \ref{fig:exflow} contains a visual representation of a complete execution cycle starting up from that point.
 
 \begin{itemize}
  \item When \emph{Define Job} is completely rendered, the user is presented a form to configure a new MapReduce job and its supporting virtual cluster.
@@ -312,35 +317,45 @@ Bearing those singularities in mind, an \emph{Apache Hadoop} and \emph{Oracle JR
 Both machines share the same physical configuration which is comprised of an octo-core Intel Xeon CPU layout, 8 GB RAM, 200 GB SATA 3 HDD and dual Gigabit Ethernet connectivity.
 
 \subsection{Testing methodology}\label{subsec:methodology}
-\noindent In order to give a general picture of \emph{qosh}'s performance we set up three different testing cases in which we measured the time required by the whole executing process. We also \emph{hard coded} timing marks to cut relevant parts off and to reduce measurement errors. To that account ---to bound the experiment variance--- testing cases were executed and measured ten times each, coming to 30 total; displayed results reflect a simple average of said measures.
+\noindent In order to give a general picture of \emph{qosh}'s performance we set up three different testing cases in which we measured the time required by the whole executing process. We also \emph{hard coded} timing marks to cut relevant parts off and to reduce measurement errors. To that account ---to bound the experiment variance---, testing cases were executed and measured ten times per deployment configuration; displayed results reflect a simple average of said measures.
 
 Five components were gauged:
 \begin{description}
- \item[Deploying] time stands for the time interval elapsed from the instance the virtual cluster is starting to be spawned up to when all of the instances can be reached. It should be noted this component adds up to a second of error per instance, due precisely to the one second delay between retries as explained in section \ref{subsec:execution}.
- \item[Configuring] time alludes to \emph{Hadoop} configuration time requirement. It includes transferring and decompressing input data, pushing them to HDFS and laying \emph{Hadoop} configuration out in the virtual cluster.
- \item[MapReducing] time covers exclusively the amount required to complete the \emph{MapReduce} job.
- \item[Cleaning] time spans just the temporal lapse that is needed to remove the keypair and to shutdown every instance in the cluster.
- \item[Total] time is the time it took the whole process to complete. Note that it does not equal partial times summation.
+ \item[Deploying time] stands for the time interval elapsed from the instance the virtual cluster is starting to be spawned up to when all of the instances can be reached. It should be noted this component adds up to a second of error per instance, due precisely to the one second delay between retries as explained in section \ref{subsec:execution}.
+ \item[Configuring time] alludes to \emph{Hadoop} configuration time requirement. It includes transferring and decompressing input data, pushing them to HDFS and laying \emph{Hadoop} configuration out in the virtual cluster.
+ \item[\emph{MapReducing} time] covers exclusively the amount required to complete the \emph{MapReduce} job.
+ \item[Cleaning time] spans just the temporal lapse that is needed to remove the keypair and to shutdown every instance in the cluster.
+ \item[Total time] is the time it took the whole process to complete. Note that it does not equal partial times summation.
 \end{description}
 
-\subsection{Results analysis}
-\noindent 
+The \emph{MapReduce} application that we used is the \emph{well-known} \texttt{Wordcount}, which counts the number of words in an actual document set. \emph{Apache Hadoop} was configured to allocate to its underlaying JVM up to the maximum RAM available to the instance.
 
-\begin{figure}[htb]
+The first test case centered on evaluating \emph{qosh}'s timings when the virtual cluster was scaled out. Thus, a fixed 62.5 MB plain text document list was fed to a growing virtual cluster ranging from one 1 GB RAM/VCPU instance to eight ---4 instances on each node, as \emph{OpenStack} was laid over a dual-node cluster.
+
+For the second test case, the number of VMs spawned remained constant in different executions but its capabilities ---RAM and VCPU count--- were sequentially doubled from 1 GB RAM/VCPU to reach 4 GB RAM/VCPU, to account for \emph{qosh}'s tendency on vertical scaling. The 62.5 MB of plain text was kept untouched as on the first case.
+
+Lastly, a third test case presents the resulting measurements obtained on the same virtual cluster configuration, when the input size was sequentially doubled from 62.5 to 250 MB.
+
+\subsection{Results analysis}
+\noindent Figure \ref{fig:scaleout} presents the evolution of different timings as instance count increases from one to eight. It can be seen how deploying, configuring and clearing measurements rise slightly with instance count, while processing time drops, all as expected.
+
+\begin{figure}[tp]
 \centering
 \includegraphics[width=0.45\textwidth]{img/007}
 \caption{Tendency on scaling out}
 \label{fig:scaleout}
 \end{figure}
 
-\begin{figure}[tbp]
+Figure \ref{fig:scalein}
+
+\begin{figure}[tp]
 \centering
 \includegraphics[width=0.45\textwidth]{img/008}
 \caption{Tendency on scaling in}
 \label{fig:scalein}
 \end{figure}
 
-\begin{figure}[tbp]
+\begin{figure}[tp]
 \centering
 \includegraphics[width=0.45\textwidth]{img/009}
 \caption{Tendency on input size escalation}
@@ -355,7 +370,7 @@ Five components were gauged:
 \bibliographystyle{abbrv}
 \bibliography{qosh-paper}
 
-\appendix
+%\appendix
 
 % \section{Cloud-init scripts}\label{sec:apx}
 % \subsection{cloud-prenet.sh}
