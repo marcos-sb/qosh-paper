@@ -186,7 +186,7 @@ An EC2-compatible VM differs from a \emph{regular} VM in a few peculiarities:
 \begin{description}
  \item[Container format] is really subject to framework requirements but the most commonly preferred formats are raw and qcow2 for cloud images, while traditional VMs depend exclusively on the virtualization platform support.
  
- \item[User access] is controlled by injecting a private part of an ssh keypair into booting VMs, so that only users with the public counterpart are allowed to log in. However, that private part is not \emph{pushed} into the VM file system by the cloud framework itself, it is \emph{pulled} instead to a web location, concealed from other VMs, so it is the VM's duty to fetch and safeguard that keypair.
+ \item[User access] is controlled by injecting a private part of an SSH keypair into booting VMs, so that only users with the public counterpart are allowed to log in. However, that private part is not \emph{pushed} into the VM file system by the cloud framework itself, it is \emph{pulled} instead to a web location, concealed from other VMs, so it is the VM's duty to fetch and safeguard that keypair.
  
  \item[VHDD resizing] which is the ability to change the VM's HDD size on demand, can only be accomplished if \emph{direct kernel boot} was being used. Enabling a VM image to boot a kernel directly implies extracting both initram and kernel images from the VM file system and uploading them to the particular cloud framework deployed.
 \end{description}
@@ -278,6 +278,13 @@ Bearing those singularities in mind, an \emph{Apache Hadoop} and \emph{Oracle JR
 \subsection{Execution flow}\label{subsec:execution}
 \noindent Before any MapReduce processing take place, a user should log in and navigate to \emph{Define Job} page. Figure \ref{fig:exflow} contains a visual representation of a complete execution cycle starting up from that point.
 
+\begin{figure*}[htb]
+\centering
+\includegraphics[width=0.65\textwidth]{img/006}
+\caption{Global execution flow}
+\label{fig:exflow}
+\end{figure*}
+
 \begin{itemize}
  \item When \emph{Define Job} is completely rendered, the user is presented a form to configure a new MapReduce job and its supporting virtual cluster.
  
@@ -285,11 +292,11 @@ Bearing those singularities in mind, an \emph{Apache Hadoop} and \emph{Oracle JR
  
  \item Once the upload have finished, a new process is spawned to manage the remaining procedure; meanwhile, the user is sent back to the \emph{Home} page.
  
- \item To guarantee a fair level of privacy, an ssh keypair is created anew on each MapReduce execution. Along with it, a set of virtual machines, or instances, is started.
+ \item To guarantee a fair level of privacy, an SSH keypair is created anew on each MapReduce execution. Along with it, a set of virtual machines, or instances, is started.
  
- \item As the amount of time required to bring up networking on each instance varies depending on virtual and real cluster size, a mechanism to check their networking status had to be devised. In order to reduce the complexity and coupling introduced by making the instances fire a \emph{networking-ready} signal, we came up with a better option. Instead of pushing a \emph{ready} event from the VM to the cloud, the process supervising their creation is kept looping trying to establish an ssh connection to the instances, up to a certain number of attempts. To reduce the CPU overload a one second delay is set between retries.
+ \item As the amount of time required to bring up networking on each instance varies depending on virtual and real cluster size, a mechanism to check their networking status had to be devised. In order to reduce the complexity and coupling introduced by making the instances fire a \emph{networking-ready} signal, we came up with a better option. Instead of pushing a \emph{ready} event from the VM to the cloud, the process supervising their creation is kept looping trying to establish an SSH connection to the instances, up to a certain number of attempts. To reduce CPU overload, a one second delay is set between retries.
  
- \item Once every instance can be reached through ssh, a virtual \emph{Hadoop} cluster is configured following the guidelines contained in \emph{Fabric}'s script.
+ \item Once every instance can be reached through SSH, a virtual \emph{Hadoop} cluster is configured following the guidelines contained in \emph{Fabric}'s script.
  
  \item Through Fabric mediation, \emph{Hadoop} daemons are started on every instance, input data and workflow implementation are pushed onto HDFS and the MapReduce application is started.
  
@@ -299,22 +306,51 @@ Bearing those singularities in mind, an \emph{Apache Hadoop} and \emph{Oracle JR
 \end{itemize}
 
 
-\begin{figure*}[tbp]
-\centering
-\includegraphics[width=0.65\textwidth]{img/006}
-\caption{Global execution flow}
-\label{fig:exflow}
-\end{figure*}
-
-
-
 \section{Performance evaluation}\label{sec:performance}
-\noindent
+\noindent To assess a measure on \emph{qosh}'s performance a custom deployment was carried out on two nodes. In one of them, the automatic installation procedure was executed first and the resulting configuration tweaked later to communicate with the other node. In the other, the bare minimum required to allow for VM execution was manually installed ---\emph{OpenStack Compute} and required libraries.
 
+Both machines share the same physical configuration which is comprised of an octo-core Intel Xeon CPU layout, 8 GB RAM, 200 GB SATA 3 HDD and dual Gigabit Ethernet connectivity.
+
+\subsection{Testing methodology}\label{subsec:methodology}
+\noindent In order to give a general picture of \emph{qosh}'s performance we set up three different testing cases in which we measured the time required by the whole executing process. We also \emph{hard coded} timing marks to cut relevant parts off and to reduce measurement errors. To that account ---to bound the experiment variance--- testing cases were executed and measured ten times each, coming to 30 total; displayed results reflect a simple average of said measures.
+
+Five components were gauged:
+\begin{description}
+ \item[Deploying] time stands for the time interval elapsed from the instance the virtual cluster is starting to be spawned up to when all of the instances can be reached. It should be noted this component adds up to a second of error per instance, due precisely to the one second delay between retries as explained in section \ref{subsec:execution}.
+ \item[Configuring] time alludes to \emph{Hadoop} configuration time requirement. It includes transferring and decompressing input data, pushing them to HDFS and laying \emph{Hadoop} configuration out in the virtual cluster.
+ \item[MapReducing] time covers exclusively the amount required to complete the \emph{MapReduce} job.
+ \item[Cleaning] time spans just the temporal lapse that is needed to remove the keypair and to shutdown every instance in the cluster.
+ \item[Total] time is the time it took the whole process to complete. Note that it does not equal partial times summation.
+\end{description}
+
+\subsection{Results analysis}
+\noindent 
+
+\begin{figure}[htb]
+\centering
+\includegraphics[width=0.45\textwidth]{img/007}
+\caption{Tendency on scaling out}
+\label{fig:scaleout}
+\end{figure}
+
+\begin{figure}[tbp]
+\centering
+\includegraphics[width=0.45\textwidth]{img/008}
+\caption{Tendency on scaling in}
+\label{fig:scalein}
+\end{figure}
+
+\begin{figure}[tbp]
+\centering
+\includegraphics[width=0.45\textwidth]{img/009}
+\caption{Tendency on input size escalation}
+\label{fig:inputscale}
+\end{figure}
 
 \section{Conclusions and future work}\label{sec:conclusions}
 \noindent
 
+\nocite{*}
 
 \bibliographystyle{abbrv}
 \bibliography{qosh-paper}
