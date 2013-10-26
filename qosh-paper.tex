@@ -115,10 +115,6 @@ Our testing methodology considered diverse subjective magnitudes ---documentatio
 
 \noindent \emph{qosh}'s setup defaults to a single node installation in which both infrastructure and execution environment are configured. Figure \ref{fig:arch1} precisely depicts the layered configuration. Atop Fedora 17 our setup script downloads and installs \emph{OpenStack} precompiled packages, and afterwards it downloads, untars and registers a virtual machine image containing an \emph{Oracle 1.7 JRE} and \emph{Apache Hadoop 1.0.4} installation. Likewise, it automatically creates the right user and tenant so that \emph{qosh} may be put to use straightaway.
 
-
-
-
-
 At the right end of Figure \ref{fig:arch1}, it appears an \emph{Interface} module lying on top of Fedora and being connected to both \emph{OpenStack} and \emph{Apache Hadoop}. Its main purpose is to deploy virtual \emph{Hadoop} clusters, to manage its component virtual machines' ---or \emph{VM}s--- lifecycles and to orchestrate \emph{MapReduce} workflows executions.
 
 
@@ -339,31 +335,51 @@ Lastly, a third test case presents the resulting measurements obtained on the sa
 \subsection{Results analysis}
 \noindent Figure \ref{fig:scaleout} presents the evolution of different timings as instance count increases from one to eight. It can be seen how deploying, configuring and clearing measurements rise slightly with instance count, while processing time drops, all as expected.
 
-\begin{figure}[tp]
+\begin{figure}[htp]
 \centering
 \includegraphics[width=0.45\textwidth]{img/007}
 \caption{Tendency on scaling out}
 \label{fig:scaleout}
 \end{figure}
 
-Figure \ref{fig:scalein}
+In figure \ref{fig:scalein} it is shown how vertical scaling affects \emph{qosh}'s performance. Deploying and cleaning times stay constant ---two instances on every execution---, whereas processing and configuring times are reduced as instances are upgraded.
 
-\begin{figure}[tp]
+\begin{figure}[htp]
 \centering
 \includegraphics[width=0.45\textwidth]{img/008}
 \caption{Tendency on scaling in}
 \label{fig:scalein}
 \end{figure}
 
-\begin{figure}[tp]
+Looking at both charts it can be seen that, for our particular dual-node deployment, vertical scaling uses infrastructure resources more efficiently: two 4 GB RAM/VCPU instances are \emph{roughly} equal to eight 1 GB RAM/VCPU, but total executing time is reduced by almost 28 \%.
+
+Finally, figure \ref{fig:inputscale} shows timing evolution as input size heightens.
+
+\begin{figure}[htp]
 \centering
 \includegraphics[width=0.45\textwidth]{img/009}
 \caption{Tendency on input size escalation}
 \label{fig:inputscale}
 \end{figure}
 
+
+
 \section{Conclusions and future work}\label{sec:conclusions}
-\noindent
+\noindent \emph{qosh}'s main contributions to the current \emph{cloudy} landscape might be summarized in the following points.
+
+\begin{description}
+ \item[Simplicity] of installation and exploitation. \emph{qosh}'s installation script cannot be more straightforward and its web interface provides the means to define custom virtual \emph{Hadoop} deployments, to launch \emph{MapReduce} jobs and to download results easily and intuitively.
+ \item[Vertical integration] of every module, from the web interface to file storage and infrastructure provisioning. \emph{qosh}'s installation script configures automatically a complete execution environment with no user intervention required.
+ \item[High performance] on initial setup. \emph{qosh} has been conceived from the beginning to execute \emph{MapReduce} workflows on virtual clusters, while maintaining a minimum learning curve. Other similar solutions that ease the complexity to install and configure \emph{cloudy} environments like \emph{DevStack}, do not provide a usable environment to develop applications on top of a IaaS clouds.
+ \item[Reusability] of the main components. Adhering to \emph{Amazon Web Services} standards when building the VM \cite{ahvm:2013:online} allows to deploy it over any EC2-compatible cloud IaaS. Aditionally, its worth considering the ability to make the VM run with no cloud architecture underneath, by setting up an installation on top of a real cluster.
+ \item[Adaptability] to handle infrastructure provided by other cloud frameworks, and thus, opening the possibility to spread virtual clusters on hybrid clouds just by rewriting the \emph{Compute} module.
+ \item[Transparency] in every way possible. Source code and documentation both from \emph{qosh} and its required libraries and applications, are publicly available online.
+\end{description}
+
+\subsection{Future work}
+\noindent Arguably, \emph{qosh}'s achilles heel is a certain coupling between modules. It would be interesting to abstract a REST client interface in order to code different \emph{delegates}, which could be used to adapt messages to any REST API language, clearing hybrid cloud implementations up.
+
+Following the same decoupling dynamics, some use cases like view processing in \emph{Django} could be detached from the web interface as action objects, and be executed in an action processor. This action processor could be shaped, for instance, a processes pool consuming these action objects queuing in memory easing off horizontal scaling and load balancing.
 
 \nocite{*}
 
