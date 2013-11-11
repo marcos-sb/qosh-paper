@@ -34,7 +34,13 @@ howpublished = {\url{https://drive.google.com/file/d/0B2lmVzXW-C5UcmZIYk80dTZJb0
     url = {http://hal.inria.fr/inria-00632040},
     title = {Resilin: {E}lastic {MapReduce} for {P}rivate and {C}ommunity {C}louds},
     author = {Riteau, Pierre and Iordache, Ancuta and Morin, Christine},
-    abstract = {{The MapReduce programming model, introduced by Google, offers a simple and efficient way of performing distributed computation over large data sets. Although Google's implementation is proprietary, MapReduce can be leveraged by anyone using the free and open source Apache Hadoop framework. To simplify the usage of Hadoop in the cloud, Amazon Web Services offers Elastic MapReduce, a web service enabling users to run MapReduce jobs. Elastic MapReduce takes care of resource provisioning, Hadoop configuration and performance tuning, data staging, fault tolerance, etc. This service drastically reduces the entry barrier to perform MapReduce computations in the cloud, allowing users to concentrate on the problem to solve. However, Elastic MapReduce is restricted to Amazon EC2 resources, and is provided at an additional cost. In this paper, we present Resilin, a system implementing the Elastic MapReduce API with resources from other clouds than Amazon EC2, such as private and community clouds. Furthermore, we explore a feature going beyond the current Amazon Elastic MapReduce offering: performing MapReduce computations over multiple distributed clouds.}},
+    abstract = {{The MapReduce programming model, introduced by Google, offers a simple and efficient way of performing distributed computation over large data sets. 
+    Although Google's implementation is proprietary, MapReduce can be leveraged by anyone using the free and open source Apache Hadoop framework. To simplify the usage 
+    of Hadoop in the cloud, Amazon Web Services offers Elastic MapReduce, a web service enabling users to run MapReduce jobs. Elastic MapReduce takes care of resource provisioning, 
+    Hadoop configuration and performance tuning, data staging, fault tolerance, etc. This service drastically reduces the entry barrier to perform MapReduce computations in the cloud, 
+    allowing users to concentrate on the problem to solve. However, Elastic MapReduce is restricted to Amazon EC2 resources, and is provided at an additional cost. In this paper, we present Resilin, 
+    a system implementing the Elastic MapReduce API with resources from other clouds than Amazon EC2, such as private and community clouds. 
+    Furthermore, we explore a feature going beyond the current Amazon Elastic MapReduce offering: performing MapReduce computations over multiple distributed clouds.}},
     keywords = {Cloud computing; MapReduce; Elasticity; Hadoop; Execution platforms},
     language = {English},
     affiliation = {MYRIADS - INRIA - IRISA , West University of Timisoara [Roumanie]},
@@ -48,6 +54,13 @@ howpublished = {\url{https://drive.google.com/file/d/0B2lmVzXW-C5UcmZIYk80dTZJb0
     pdf = {http://hal.inria.fr/inria-00632040/PDF/RR-7767.pdf},
 }
 
+@misc{qosh:2013:online,
+title = {{qosh main page}},
+month = oct,
+year = 2013,
+howpublished = {\url{https://code.google.com/p/quick-openstacked-hadoop/}}
+}
+
 @misc{savanna:2013:online,
 title = {{OpenStack: Project Savanna}},
 month = oct,
@@ -55,9 +68,48 @@ year = 2013,
 howpublished = {\url{https://wiki.openstack.org/wiki/Savanna}}
 }
 
+@misc{openstack:2013:online,
+title = {{OpenStack}},
+month = oct,
+year = 2013,
+howpublished = {\url{http://www.openstack.org/}}
+}
+@misc{devstack:2013:online,
+title = {{DevStack}},
+month = oct,
+year = 2013,
+howpublished = {\url{http://devstack.org/}}
+}
+
+@misc{cloudstack:2013:online,
+title = {Apache {C}loudStack},
+month = oct,
+year = 2013,
+howpublished = {\url{http://cloudstack.apache.org/}}
+}
+
+@article{opennebula,
+ author = {Moreno-Vozmediano, R. and Montero, R. S. and Llorente, I. M.},
+ title = {{IaaS} {C}loud Architecture: From Virtualized Datacenters to Federated {C}loud Infrastructures},
+ journal = {IEEE Computer},
+ volume = {45},
+ pages = {65--72},
+ month = dec,
+ year = {2012},
+ }
+
+@inproceedings{eucalyptus,
+ author = {Nurmi, Daniel and Wolski, Rich and Grzegorczyk, Chris and Obertelli, Graziano and Youseff, Lamia and Zagorodnov, Dmitri},
+ title = {The {E}ucalyptus Open-source {C}loud-computing System},
+ booktitle = {9th IEEE International Symposium on Cluster Computing and the Grid},
+ year = {2009},
+ doi = {10.1109/CCGRID.2009.93},
+ month = sep
+ }
+
 @article{dynamicmapreduce,
  author = {Loughran, Steve and Alcaraz Calero, Jose Maria and Farrell, Andrew and Kirschnick, Johannes and Guijarro, Julio},
- title = {Dynamic {C}loud {D}eployment of a {MapReduce} {A}rchitecture},
+ title = {Dynamic {C}loud Deployment of a {MapReduce} Architecture},
  journal = {IEEE Internet Computing},
  issue_date = {November 2012},
  volume = {16},
@@ -77,9 +129,9 @@ howpublished = {\url{https://wiki.openstack.org/wiki/Savanna}}
 
 @inproceedings{cloudmapreduce,
  author = {Liu, Huan and Orban, Dan},
- title = {Cloud {MapReduce}: {A} {MapReduce} {I}mplementation on {T}op of a {C}loud {O}perating {S}ystem},
+ title = {Cloud {MapReduce}: A {MapReduce} Implementation on Top of a {C}loud Operating System},
  booktitle = {Proceedings of the 2011 11th IEEE/ACM International Symposium on Cluster, Cloud and Grid Computing},
- series = {CCGRID '11},
+ series = {CCGRID'11},
  year = {2011},
  isbn = {978-0-7695-4395-6},
  pages = {464--474},
@@ -92,9 +144,5 @@ howpublished = {\url{https://wiki.openstack.org/wiki/Savanna}}
  keywords = {cloud, mapreduce, Amazon web services},
 }
 
-@Book{hadoopdefguide,
-  author = {Tom White},
-  title = {Hadoop, the Definitive Guide},
-  publisher = {O' Reilly and Yahoo! Press},
-  year = {2012}
-}
+
+

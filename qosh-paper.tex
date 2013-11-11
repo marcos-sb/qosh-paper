@@ -1,54 +1,68 @@
-\documentclass{sig-alternate}
-\usepackage[utf8]{inputenc}
-\usepackage{graphics}
-\usepackage{hyperref}
+%\documentclass{sig-alternate}
+\documentclass[conference]{IEEEtran}
 
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+%\usepackage{graphics}
+\usepackage{hyperref}
+\usepackage{multicol}
+\usepackage{float}
+\usepackage[pdftex]{graphicx}
 
 \begin{document}
+
+\title{Assessment, design and implementation of a private cloud for MapReduce applications}
+
+\author{
+\IEEEauthorblockN{Marcos Salgueiro\IEEEauthorrefmark{1}, Patricia González\IEEEauthorrefmark{1}, Tomás F. Pena\IEEEauthorrefmark{2} and José C. Cabaleiro\IEEEauthorrefmark{2}}
+\IEEEauthorblockA{\IEEEauthorrefmark{1}Department of Electronics and Systems\\Univ.\ of A Coruña, A Coruña, Spain\\Email: marcos.salgueiro@gmail.com, patricia.gonzalez@udc.es}
+\IEEEauthorblockA{\IEEEauthorrefmark{2}Centro de Investigacións en Tecnoloxías da Información, CITIUS\\Univ.\ of Santiago de Compostela, Santiago de Compostela, Spain\\Email: tf.pena@usc.es, jc.cabaleiro@usc.es}
+}
+
+
 %opening
 %
 % --- Author Metadata here ---
-\conferenceinfo{WOODSTOCK}{'97 El Paso, Texas USA}
+%\conferenceinfo{WOODSTOCK}{'97 El Paso, Texas USA}
 %\CopyrightYear{2007} % Allows default copyright year (20XX) to be over-ridden - IF NEED BE.
 %\crdata{0-12345-67-8/90/01}  % Allows default copyright data (0-89791-88-6/97/05) to be over-ridden - IF NEED BE.
 % --- End of Author Metadata ---
 
-\title{Assessment, design and implementation of a private cloud for MapReduce applications}
 
-\numberofauthors{4}
-
-\author{
-%
-\alignauthor
-Patricia Gonz\'alez G\'omez\\
-       \affaddr{Department of Electronics and Systems at UDC}\\
-       \affaddr{Campus de Elvi\~na s/n, 15007}\\
-       \affaddr{A Coru\~na, Spain}\\
-       \email{patricia.gonzalez@udc.es}
-% 2nd. author
-\alignauthor
-Jos\'e Carlos Cabaleiro Dom\'inguez\\
-       \affaddr{Institute for Clarity in Documentation}\\
-       \affaddr{P.O. Box 1212}\\
-       \affaddr{Dublin, Ohio 43017-6221}\\
-       \email{jc.cabaleiro@usc.es}
-% 3rd. author
-\alignauthor
-Tom\'as Fern\'andez Pena\\
-       \affaddr{The Th{\o}rv{\"a}ld Group}\\
-       \affaddr{1 Th{\o}rv{\"a}ld Circle}\\
-       \affaddr{Hekla, Iceland}\\
-       \email{tf.pena@usc.es}
-\and  % use '\and' if you need 'another row' of author names
-% 4th. author
-\alignauthor
-Marcos Salgueiro Balsa\\
-       \affaddr{Improving Metrics}\\
-       \affaddr{Brookhaven National Lab}\\
-       \affaddr{P.O. Box 5000}\\
-       \email{marcos.salgueiro@gmail.com}
-}
-
+% \numberofauthors{4}
+% 
+% \author{
+% %
+% \alignauthor
+% Patricia Gonz\'alez G\'omez\\
+%        \affaddr{Department of Electronics and Systems at UDC}\\
+%        \affaddr{Campus de Elvi\~na s/n, 15007}\\
+%        \affaddr{A Coru\~na, Spain}\\
+%        \email{patricia.gonzalez@udc.es}
+% % 2nd. author
+% \alignauthor
+% Jos\'e Carlos Cabaleiro Dom\'inguez\\
+%        \affaddr{Centro de Investigacións en Tecnoloxías da Información, CITIUS}\\
+%        \affaddr{Univ.\ of Santiago de Compostela}\\
+%        \affaddr{Santiago de Compostela, Spain}\\
+%        \email{jc.cabaleiro@usc.es}
+% % 3rd. author
+% \alignauthor
+% Tom\'as Fern\'andez Pena\\
+%        \affaddr{Centro de Investigacións en Tecnoloxías da Información, CITIUS}\\
+%        \affaddr{Univ.\ of Santiago de Compostela}\\
+%        \affaddr{Santiago de Compostela, Spain}\\
+%        \email{tf.pena@usc.es}
+% \and  % use '\and' if you need 'another row' of author names
+% % 4th. author
+% \alignauthor
+% Marcos Salgueiro Balsa\\
+%        \affaddr{Improving Metrics}\\
+%        \affaddr{Brookhaven National Lab}\\
+%        \affaddr{P.O. Box 5000}\\
+%        \email{marcos.salgueiro@gmail.com}
+% }
+% 
 \maketitle
 
 
@@ -56,19 +70,22 @@ Marcos Salgueiro Balsa\\
 \begin{abstract}
 The extraordinarily vast amount of information generated as a byproduct of Internet usage, has been embodying an increasing burden to traditional procedures and models, unable to handle it efficiently due to its heterogeneous nature. Besides, as the volume of information grows so does the size of the datacenter required to process and store it, quickly overloading its full capacity when demand peaks. Together ---\emph{not relational} data and uneven demand distribution--- they shape the basis of modern data-driven request servicing.
 
-A series of technologies have been developing lately to manage this scenario. Two of the most highlighted among them are \emph{MapReduce} and \emph{Cloud Computing}. \emph{MapReduce} was introduced in \cite{Dean:2004:MSD:1251254.1251264} to abstract the common difficulties linked to distributed processing on large clusters. \emph{Cloud Computing}, on the other hand, agglutinates miscellaneous subsystems forming a unified interface to flexibly deploy and manage virtual clusters.
+A series of technologies have been developed lately to manage this scenario. Two of the most highlighted among them are \emph{MapReduce} and \emph{Cloud Computing}. MapReduce was introduced in \cite{Dean:2004:MSD:1251254.1251264} to abstract the common difficulties linked to distributed processing on large clusters. Cloud Computing, on the other hand, agglutinates miscellaneous subsystems forming a unified interface to flexibly deploy and manage virtual clusters.
 
-This paper explores their potential symbiosis, in order to create a robust and scalable environment, to execute \emph{MapReduce} workflows regardless of the underlaying infrastructure. It also details a proof of concept implementation using open source tools, similar to Amazon's own \emph{Elastic MapReduce}.
+This paper explores their potential symbiosis, in order to create a robust and scalable environment, to execute MapReduce workflows regardless of the underlying infrastructure (\emph{Hadoop as a Service}, HaaS). It also details a proof of concept implementation using open source tools, similar to Amazon Elastic MapReduce.
 \end{abstract}
 
 
+\begin{IEEEkeywords}
+ MapReduce, Hadoop as a Service, OpenStack, Private clouds, Cloud Computing, Virtualization.
+\end{IEEEkeywords}
 
-\keywords{Distributed Processing, Virtualization, Cloud Computing, MapReduce, OpenStack, Hadoop.\\}
+%\keywords{Distributed Processing, Virtualization, Cloud Computing, MapReduce, OpenStack, Hadoop.}
 
 
 
 \section{Introduction}\label{sec:int}
-\noindent The proliferation of Internet-enabled handhelds and the continuously improving access speed, have set a background in which user services are becoming heftier ---from SQ Video yesterday to HD today and 4K tomorrow---, are being consumed throughout the day and are requiring an increasing amount of user-related data ---GPS position, locale, personal settings, filters, previous searches or purchases, connections, friends, retweets, etc.--- to take into account. It is this last trait what have been representing the biggest trouble: the \emph{class} of data packed within these services cannot be modeled by traditional standards, as it lacks a relational structure.
+\noindent The proliferation of Internet-enabled handhelds and the continuously improving access speed, have set a background in which user services are becoming heftier ---from SQ Video yesterday to HD today and 4K tomorrow---, are being consumed throughout the day and are requiring an increasing amount of user-related data ---GPS position, locale, personal settings, filters, previous searches or purchases, connections, friends, retweets, etc.--- to take into account. It is this last trait what have been representing the biggest trouble: the class of data packed within these services cannot be modeled by traditional standards, as it lacks a relational structure.
 
 \begin{figure}[tp]
 \centering
@@ -79,28 +96,28 @@ This paper explores their potential symbiosis, in order to create a robust and s
 
 While some argue that every miniworld may be \emph{transformed} into a Relational Model, it is the necessity to lay out the data structure before information can be saved and put to use what poses a central obstacle in making these models adapt to such a swiftly mutating data. As figure \ref{fig:trend} depicts, the gap between relational and unstructured information continues to widen, that is why there has been an explicit push off schema-driven modeling towards loosely-structured representations.
 
-So, relaying on \emph{schemaless} data definition allows to better cope with unstructured information. There are still, however, two dimensions to discuss: data volume and non-uniform access distribution.
+So, relaying on schemaless data definition allows to better cope with unstructured information. There are still, however, two dimensions to discuss: data volume and non-uniform access distribution.
 
-To handle data flowing in at Internet scale there has to be devised a distributed processing model beyond large clusters, high capacity networks and intelligent load balancers. To deal with that sea of data, \emph{MapReduce} processing model splits input all the way down to unrelated pairs of \emph{unique} key and key-related data. Using the approach to uniquely identify each \emph{atomic} piece of information, allows to easily apply a fair distribution policy across participating nodes able to reduce network transfers and to recover from failure.
+To handle data flowing in at Internet scale there has to be devised a distributed processing model beyond large clusters, high capacity networks and intelligent load balancers. To deal with that sea of data, MapReduce processing model splits input all the way down to unrelated pairs of unique key and key-related data. Using the approach to uniquely identify each atomic piece of information, allows to easily apply a fair distribution policy across participating nodes able to reduce network transfers and to recover from failure.
 
-Finally, clusters' capacity has to be able to accommodate a variable number of information requests per second, reducing idle node time without implying a loss in service quality. An ideally suited technique to that end is \emph{Cloud Computing}. \emph{Cloud Computing} has been making headlines as of late praised for its inherent nature to scale-out virtual deployments effortlessly, and so, capable of stretching and shrinking computational power with demand needs.
+Finally, clusters capacity has to be able to accommodate a variable number of information requests per second, reducing idle node time without implying a loss in service quality. An ideally suited technique to reach that objective is Cloud Computing. Cloud Computing has been making headlines as of late praised for its inherent nature to scale-out virtual deployments effortlessly, and so, capable of stretching and shrinking computational power with demand needs.
 
-Inasmuch as \emph{MapReduce} and \emph{Cloud Computing} together may prove useful in servicing a potential world of data consumers, it is easy to understand the growing interest in both technologies. Currently, the best known example of a unified approach to said technologies is \emph{Amazon Elastic MapReduce} (EMR) \cite{emr:2013:online}. Nonetheless, there are other implementations focusing on extending EMR's functionality, either by surpassing its constraints ---information must be made semi-public and \emph{MapReduce} workflows need to be executed on Amazon's installation--- with \emph{Resilin} \cite{resilin}, \emph{Savanna} \cite{savanna:2013:online} or \emph{Dynamic MapReduce} \cite{dynamicmapreduce}, or by reusing its cloud interface to build a \emph{MapReduce} platform upon like with \emph{Cloud MapReduce} \cite{cloudmapreduce}.
+Inasmuch as MapReduce and Cloud Computing together may prove useful in servicing a potential world of data consumers, it is easy to understand the growing interest in both technologies. Currently, the best known example of a unified approach to said technologies is \emph{Amazon Elastic MapReduce} (EMR) \cite{emr:2013:online}. Nonetheless, there are other implementations focusing on extending EMR functionality, either by surpassing its constraints ---information must be made semi-public and MapReduce workflows need to be executed on Amazon's installation--- with \emph{Resilin}~\cite{resilin}, \emph{Savanna}~\cite{savanna:2013:online} or \emph{Dynamic MapReduce}~\cite{dynamicmapreduce}, or by reusing its cloud interface to build a MapReduce platform upon like with \emph{Cloud MapReduce}~\cite{cloudmapreduce}.
 
-The major contribution of this work is a simple and unified interface to manage \emph{MapReduce} computations, leveraging any existing \emph{IaaS} deployment with a little customization, while providing an automatic one node test installation based on \emph{OpenStack} and \emph{Apache Hadoop}. We have called our implementation \emph{qosh} and it has been written in \emph{Python}.
+The major contribution of this work is a simple and unified interface to manage MapReduce computations, leveraging any existing \emph{IaaS} deployment with a little customization, while providing an automatic one node test installation based on \emph{OpenStack} and \emph{Apache Hadoop}. We have called our implementation \emph{qosh} (\emph{quick-openstacked-hadoop}) and it has been written in Python.
 
-Section \ref{sec:frameworks} elaborates on current IaaS framework implementations, focusing on its highlights and drawbacks. Section \ref{sec:arch} details \emph{qosh}'s architecture and self-installing deployment structure. Section \ref{sec:execution} goes through a complete execution cycle, identifying key points of the process. Section \ref{sec:performance} reviews qosh performance when deployed on a real cluster. Section \ref{sec:conclusions} collects a reflection on \emph{qosh}'s main contributions and future development guidelines.
+Section \ref{sec:frameworks} elaborates on current IaaS framework implementations, focusing on its highlights and drawbacks. Section \ref{sec:arch} details qosh architecture and self-installing deployment structure, and goes through a complete execution cycle, identifying key points of the process. Section \ref{sec:performance} reviews qosh performance when deployed on a real cluster. Finally, section \ref{sec:conclusions} collects a reflection on qosh main contributions and future development guidelines.
 
 
 
 \section{IaaS cloud frameworks}\label{sec:frameworks}
-\noindent In order to abstract virtual cluster creation and destruction \emph{qosh} relies on an \emph{IaaS cloud} framework. Even though there is a good number of them, they all share a common architecture and cover a similar set of functionality with mixed maturity levels.
+\noindent In order to abstract virtual cluster creation and destruction qosh relies on an \emph{IaaS cloud} framework. Even though there are a good number of them, they all share a common architecture and cover a similar set of functionality with mixed maturity levels.
+     
+Structurally, they are comprised of a series of modules connected together by an asynchronous message broker. Internally, they save their processing information in a database and exploit their server hardware through the use of a hypervisor; externally, they expose their capabilities implementing a REST interface to be consumed by a demanding client.
 
-Structurally, they are comprised of a series of modules connected together by an asynchronous message broker. Internally, they save their processing information in a database and exploit their server's hardware through the use of a hypervisor; externally, they expose their capabilities implementing a REST interface to be consumed by a demanding client.
+It could be argued that any listing that covers the most widely used IaaS cloud frameworks must include \emph{OpenStack}~\cite{openstack:2013:online}, \emph{CloudStack}~\cite{cloudstack:2013:online}, \emph{OpenNebula}~\cite{opennebula} or \emph{Eucalyptus}~\cite{eucalyptus}. Precisely, in order to determine which of them could couple qosh best, a reduced installation was carried out before putting them to use.
 
-It could be argued that any listing that covers the most widely used IaaS cloud frameworks must include \emph{OpenStack}, \emph{CloudStack}, \emph{OpenNebula} or \emph{Eucalyptus}. Precisely, in order to determine which of them could couple \emph{qosh} best, a reduced installation was carried out before putting them to use.
-
-Our testing methodology considered diverse subjective magnitudes ---documentation completeness, installation complexity, modular flexibility, standardization, etc.--- to give a general view of each one of them. In the end, \emph{OpenStack} came up on top inasmuch as the latest two releases have immensely improved both its reach in real deployments and its perceived functional maturity.
+Our testing methodology considered diverse subjective magnitudes ---documentation completeness, installation complexity, modular flexibility, standardization, etc.--- to give a general view of each one of them. In the end, OpenStack came up on top inasmuch as the latest two releases have immensely improved both its reach in real deployments and its perceived functional maturity.
 
 
 
@@ -113,15 +130,15 @@ Our testing methodology considered diverse subjective magnitudes ---documentatio
 \label{fig:arch1}
 \end{figure}
 
-\noindent \emph{qosh}'s setup defaults to a single node installation in which both infrastructure and execution environment are configured. Figure \ref{fig:arch1} precisely depicts the layered configuration. Atop Fedora 17 our setup script downloads and installs \emph{OpenStack} precompiled packages, and afterwards it downloads, untars and registers a virtual machine image containing an \emph{Oracle 1.7 JRE} and \emph{Apache Hadoop 1.0.4} installation. Likewise, it automatically creates the right user and tenant so that \emph{qosh} may be put to use straightaway.
+\noindent qosh setup defaults to a single node installation in which both infrastructure and execution environment are configured. Figure \ref{fig:arch1} precisely depicts the layered configuration. Atop Fedora 17, our setup script downloads and installs OpenStack precompiled packages, and afterwards it downloads, untars and registers a virtual machine image containing an Oracle 1.7 JRE and Apache Hadoop 1.0.4 installation. Likewise, it automatically creates the right user and tenant so that qosh may be put to use straightaway.
 
-At the right end of Figure \ref{fig:arch1}, it appears an \emph{Interface} module lying on top of Fedora and being connected to both \emph{OpenStack} and \emph{Apache Hadoop}. Its main purpose is to deploy virtual \emph{Hadoop} clusters, to manage its component virtual machines' ---or \emph{VM}s--- lifecycles and to orchestrate \emph{MapReduce} workflows executions.
+At the right end of Figure \ref{fig:arch1}, it appears an \emph{Interface} module lying on top of Fedora and being connected to both OpenStack and Hadoop. Its main purpose is to deploy virtual Hadoop clusters, to manage its component virtual machines ---or \emph{VM}s--- lifecycles and to orchestrate MapReduce workflows executions.
 
 
 
 \subsection{Initial setup}
 
-\noindent \emph{qosh}'s own installation script will automatically configure a highly-performing testing environment that could be easily scaled-out as demand grows. Figure \ref{fig:initial} represents the layered setup decomposition in a single node after the installation procedure had finished.
+\noindent The qosh installation script will automatically configure a highly--performing testing environment that could be easily scaled-out as demand grows. Figure \ref{fig:initial} represents the layered setup decomposition in a single node after the installation procedure had finished.
 
 \begin{figure}[htp]
 \centering
@@ -130,19 +147,19 @@ At the right end of Figure \ref{fig:arch1}, it appears an \emph{Interface} modul
 \label{fig:initial}
 \end{figure}
 
-The \emph{OpenStack} modules deployed are those fundamentally required by a minimum standalone setup:
+The OpenStack modules deployed are those fundamentally required by a minimum standalone setup~\cite{openstack:2013:online}:
 
-\begin{description}
- \item[Keystone] manages authorization, authentication and quota by user and \emph{tenant}.
- \item[Nova] handles VMs' lifecycles and networking configuration, routing and data flow utilizing the \emph{Kernel Virtual Machine} (KVM) as hypervisor.
+\begin{description}[\IEEEsetlabelwidth{Keystone}]
+ \item[Keystone] manages authorization, authentication and quota by user and tenant.
+ \item[Nova] handles VMs lifecycles and networking configuration, routing and data flow utilizing Kernel Virtual Machine (KVM) as hypervisor.
  \item[Glance] holds the browsable catalog of installed VM images on the local file system.
 \end{description}
 
-Which implies that no fault tolerance measures are defined ---as expected from a single node and local file system arrangement--- cloud-wise, but it certainly allows for other standard safety protocols to be implemented ---on the order of some RAID level with replication or UPS solutions.
+This implies that no fault tolerance measures are defined ---as expected from a single node and local file system arrangement--- cloud-wise, but it certainly allows for other standard safety protocols to be implemented ---e.g.\ some RAID level with replication or UPS solutions.
 
 
 \subsection{Interface}
-\noindent Figure \ref{fig:interface} represents the user interface's modular composition. There are three essential modules within:
+\noindent Figure \ref{fig:interface} represents the user interface modular composition. There are three essential modules within:
 
 \begin{figure}[tp]
 \centering
@@ -153,45 +170,45 @@ Which implies that no fault tolerance measures are defined ---as expected from a
 
 
 \subsubsection{Compute}
-\noindent \emph{Compute} is the REST access client that bridges the \emph{OpenStack} cloud with the web interface, effectively decoupling \emph{qosh} from the infrastructure provider. It basically encapsulates a series of methods by which an authorized user is allowed to manually define VM deployment behavior.
+\noindent \emph{Compute} is the REST access client that bridges the OpenStack cloud with the web interface, effectively decoupling qosh from the infrastructure provider. It basically encapsulates a series of methods by which an authorized user is allowed to manually define VM deployment behavior.
 
-Current implementation manages virtual clusters defined with \emph{OpenStack} running on a single real cluster, i. e. no hybrid clouds are supported. However, \emph{Compute} may be effortlessly adapted to handle VMs running on other IaaS deployments or to manage hybrid clouds, with no interaction whatsoever with another module, as far as \emph{qosh} API semantics are preserved.
+Current implementation manages virtual clusters defined with OpenStack running on a single real cluster, i.e.\ no hybrid clouds are supported. However, \emph{Compute} may be effortlessly adapted to handle VMs running on other IaaS deployments or to manage hybrid clouds, with no interaction whatsoever with another module, as far as qosh API semantics are preserved.
 
 
 \subsubsection{Fabric}
-\noindent \emph{Fabric} is a \emph{Python} library used to simplify managing our virtual cluster by establishing SSH tunnels with the VMs, letting \emph{qosh} shape \emph{Hadoop} configuration, put processing data into HDFS ---Hadoop Distributed File System--- and recover results to user space; everything as SSH traffic.
+\noindent \emph{Fabric} is a Python library used to simplify the management of our virtual cluster by establishing SSH tunnels with the VMs, letting qosh shape Hadoop configuration, putting processing data into HDFS (Hadoop Distributed File System) and recovering results to user space; everything as SSH traffic.
 
-To establish SSH connections our \emph{Fabric} module is fed a \emph{Keystone}-generated keypair. This keypair is created on each virtual cluster deployment and shared by all VMs in the same cluster. Its private part is injected into VMs once they have finished booting (refer to section \ref{subsec:initsh} for an implementation), and its public part is kept on the local file system. It is automatically removed ---both from \emph{OpenStack} and file system--- when \emph{Apache Hadoop} execution completes.
+To establish SSH connections our \emph{Fabric} module is fed a \emph{Keystone}-generated keypair. This keypair is created on each virtual cluster deployment and shared by all VMs in the same cluster. Its private part is injected into VMs once they have finished booting, and its public part is kept on the local file system. It is automatically removed ---both from OpenStack and file system--- when Hadoop execution completes.
 
 
 \subsubsection{Django}
-\noindent \emph{Django} glues together both modules, renders HTML to be displayed to the user and organizes result and metadata storage.
+\noindent \emph{Django} glues together both modules, renders HTML to be displayed to the user, and organizes result and metadata storage.
 
-\emph{Django} can be plugged different back-ends, from session objects managers to static file storage, to deal with varying needs and to accommodate future demands. \emph{qosh}'s plugin configuration includes: \emph{MySQL}, used as meta-information repository; the server file system, to save and retrieve \emph{MapReduce} I/O data and \emph{OpenStackBackend} to delegate into \emph{Keystone} user access and quota.
+\emph{Django} can be plugged different back-ends, from session objects managers to static file storage, to deal with varying needs and to accommodate future demands. The qosh plugin configuration includes: MySQL, used as meta-information repository; the server file system, to save and retrieve MapReduce I/O data; and \emph{OpenStackBackend} to delegate into \emph{Keystone} user access and quota.
 
-Putting it all together, a user would define \emph{MapReduce} computations though a Django-backed web interface. Django would pass configuration parameters on to \emph{Fabric} for creating and feeding input data to a virtual \emph{Hadoop} cluster. And lastly, real infrastructure would be provisioned by an IaaS cloud driven through \emph{Compute} module.
+Putting it all together, a user would define MapReduce computations though a Django-backed web interface. Django would pass configuration parameters on to \emph{Fabric} for creating and feeding input data to a virtual Hadoop cluster. And lastly, real infrastructure would be provisioned by an IaaS cloud driven through \emph{Compute} module.
 
 
 \subsection{Deployment}
-\noindent \emph{qosh}'s installation script will take care of a single node deployment in an automatic fashion, so no previous knowledge of \emph{OpenStack} or \emph{Hadoop} would be required to exploit \emph{qosh}'s elastic \emph{MapReduce} prowess in this case; though the virtual cluster's \emph{elasticity} would be heavily constrained. To overcome this limitation, \emph{qosh} has been architected to abstract the infrastructure underneath, allowing for any IaaS framework to be deployed at any size ---some \emph{Compute} module's parts would require rewriting, nonetheless, if \emph{OpenStack} were not used.
+\noindent The qosh installation script will take care of a single node deployment in an automatic fashion, so no previous knowledge of OpenStack or Hadoop would be required to exploit qosh elastic MapReduce prowess in this case; though the virtual cluster elasticity would be heavily constrained. To overcome this limitation, qosh has been architected to abstract the infrastructure underneath, allowing for any IaaS framework to be deployed at any size (some parts of the \emph{Compute} module would require rewriting, nonetheless, if OpenStack were not used).
 
-An installation may be grown from a starting single node setup just by laying out a real IaaS cloud cluster of any size. In fact, any public cloud \emph{Amazon Elastic Compute Cloud}-compatible (EC2-compatible) could be used to expose infrastructure that \emph{qosh} would utilize to spawn virtual clusters of any size.
+An installation may be grown from a starting single node setup just by laying out a real IaaS cloud cluster of any size. In fact, any public cloud Amazon Elastic Compute Cloud-compatible (EC2-compatible) could be used to expose infrastructure that qosh would utilize to spawn virtual clusters of any size.
 
 
 \subsection{Apache Hadoop Virtual Machine}\label{subsec:hadvm}
-\noindent The \emph{Apache Hadoop} installation has been manually configured from scratch inside a virtual machine. It's been conceived to have a minimum footprint while maintaining a server-grade stability. In order to fulfill these requirements \emph{CentOS} was chosen and an EC2-compatible VM was built up with it.
+\noindent The Apache Hadoop installation has been manually configured from scratch inside a virtual machine. It has been conceived to have a minimum footprint while maintaining a server-grade stability. In order to fulfill these requirements CentOS was chosen and an EC2--compatible VM was built up with it.
 
 An EC2-compatible VM differs from a \emph{regular} VM in a few peculiarities:
 
-\begin{description}
- \item[Container format] is really subject to framework requirements but the most commonly preferred formats are raw and qcow2 for cloud images, while traditional VMs depend exclusively on the virtualization platform support.
+\begin{itemize}
+ \item Container format: is really subject to framework requirements but the most commonly preferred formats are raw and qcow2 for cloud images, while traditional VMs depend exclusively on the virtualization platform support.
  
- \item[User access] is controlled by injecting a private part of an SSH keypair into booting VMs, so that only users with the public counterpart are allowed to log in. However, that private part is not \emph{pushed} into the VM file system by the cloud framework itself, it is \emph{pulled} instead to a web location, concealed from other VMs, so it is the VM's duty to fetch and safeguard that keypair.
+ \item User access: is controlled by injecting a private part of an SSH keypair into booting VMs, so that only users with the public counterpart are allowed to log in. However, that private part is not \emph{pushed} into the VM file system by the cloud framework itself, it is \emph{pulled} instead to a web location, concealed from other VMs, so it is the VMs duty to fetch and safeguard that keypair.
  
- \item[VHDD resizing] which is the ability to change the VM's HDD size on demand, can only be accomplished if \emph{direct kernel boot} was being used. Enabling a VM image to boot a kernel directly implies extracting both initram and kernel images from the VM file system and uploading them to the particular cloud framework deployed.
-\end{description}
+ \item VHDD resizing: which is the ability to change, on demand, the HDD size of the VMs, can only be accomplished if \emph{direct kernel boot} was being used. Enabling a VM image to boot a kernel directly implies extracting both initram and kernel images from the VM file system and uploading them to the particular cloud framework deployed.
+\end{itemize}
 
-Bearing those singularities in mind, an \emph{Apache Hadoop} and \emph{Oracle JRE} installations, a limit in what kind of SSH connections can be established ---only those authenticated by keypair--- and a final compression, together, yielded \emph{qosh}'s VM \cite{ahvm:2013:online} which has potential to be executed on any cloud distribution ---considering it being EC2-compatible.
+Bearing those singularities in mind, an Apache Hadoop and Oracle JRE installations, a limit in what kind of SSH connections can be established ---only those authenticated by keypair--- and a final compression, together, yielded qosh V~\cite{ahvm:2013:online} which has potential to be executed on any cloud distribution (considering it being EC2--compatible).
 
 %What follows is the procedure carried out to yield the VM image.
 
@@ -284,9 +301,9 @@ Bearing those singularities in mind, an \emph{Apache Hadoop} and \emph{Oracle JR
 \label{fig:exflow}
 \end{figure*}
 
-\noindent Before any MapReduce processing take place, a user should log in and navigate to \emph{Define Job} page. Figure \ref{fig:exflow} contains a visual representation of a complete execution cycle starting up from that point.
+\noindent Before any MapReduce processing take place, a user should log in into qosh web interface and navigate to the \emph{Define Job} page. Figure \ref{fig:exflow} contains a visual representation of a complete execution cycle starting up from that point.
 
-\begin{itemize}
+\begin{enumerate}
  \item When \emph{Define Job} is completely rendered, the user is presented a form to configure a new MapReduce job and its supporting virtual cluster.
  
  \item In case the form be correctly filled, all of the input data and configuration parameters would be uploaded server-side.
@@ -297,38 +314,38 @@ Bearing those singularities in mind, an \emph{Apache Hadoop} and \emph{Oracle JR
  
  \item As the amount of time required to bring up networking on each instance varies depending on virtual and real cluster size, a mechanism to check their networking status had to be devised. In order to reduce the complexity and coupling introduced by making the instances fire a \emph{networking-ready} signal, we came up with a better option. Instead of pushing a \emph{ready} event from the VM to the cloud, the process supervising their creation is kept looping trying to establish an SSH connection to the instances, up to a certain number of attempts. To reduce CPU overload, a one second delay is set between retries.
  
- \item Once every instance can be reached through SSH, a virtual \emph{Hadoop} cluster is configured following the guidelines contained in \emph{Fabric}'s script.
+ \item Once every instance can be reached through SSH, a virtual Hadoop cluster is configured following the guidelines contained in \emph{Fabric} script.
  
- \item Through Fabric mediation, \emph{Hadoop} daemons are started on every instance, input data and workflow implementation are pushed onto HDFS and the MapReduce application is started.
+ \item Through Fabric mediation, Hadoop daemons are started on every instance, input data and workflow implementation are pushed onto HDFS and the MapReduce application is started.
  
- \item When the job be finished, the results will be fetched from the virtual cluster to the local file system, where they will be permanently stored.
+ \item When the job is finished, the results will be fetched from the virtual cluster to the local file system, where they will be permanently stored.
  
- \item Lastly, the instance set is destroyed and the keypair removed from both \emph{OpenStack} and the local file system.
-\end{itemize}
+ \item Lastly, the instance set is destroyed and the keypair removed from both OpenStack and the local file system.
+\end{enumerate}
 
 
 \section{Performance evaluation}\label{sec:performance}
-\noindent To assess a measure on \emph{qosh}'s performance a custom deployment was carried out on two nodes. In one of them, the automatic installation procedure was executed first and the resulting configuration tweaked later to communicate with the other node. In the other, the bare minimum required to allow for VM execution was manually installed ---\emph{OpenStack Compute} and required libraries.
+\noindent To assess a measure on qosh performance a custom deployment was carried out on two nodes. In one of them, the automatic installation procedure was executed first and the resulting configuration tweaked later to communicate with the other node. In the other, the bare minimum required to allow for VM execution was manually installed (OpenStack \emph{Compute} and required libraries).
 
 Both machines share the same physical configuration which is comprised of an octo-core Intel Xeon CPU layout, 8 GB RAM, 200 GB SATA 3 HDD and dual Gigabit Ethernet connectivity.
 
 \subsection{Testing methodology}\label{subsec:methodology}
-\noindent In order to give a general picture of \emph{qosh}'s performance we set up three different testing cases in which we measured the time required by the whole executing process. We also \emph{hard coded} timing marks to cut relevant parts off and to reduce measurement errors. To that account ---to bound the experiment variance---, testing cases were executed and measured ten times per deployment configuration; displayed results reflect a simple average of said measures.
+\noindent In order to give a general picture of qosh's performance we set up three different testing cases in which we measured the time required by the whole executing process. We also \emph{hard coded} timing marks to cut relevant parts off and to reduce measurement errors. To that account ---to bound the experiment variance---, testing cases were executed and measured ten times per deployment configuration; displayed results reflect a simple average of said measures.
 
 Five components were gauged:
-\begin{description}
- \item[Deploying time] stands for the time interval elapsed from the instance the virtual cluster is starting to be spawned up to when all of the instances can be reached. It should be noted this component adds up to a second of error per instance, due precisely to the one second delay between retries as explained in section \ref{subsec:execution}.
- \item[Configuring time] alludes to \emph{Hadoop} configuration time requirement. It includes transferring and decompressing input data, pushing them to HDFS and laying \emph{Hadoop} configuration out in the virtual cluster.
- \item[\emph{MapReducing} time] covers exclusively the amount required to complete the \emph{MapReduce} job.
- \item[Cleaning time] spans just the temporal lapse that is needed to remove the keypair and to shutdown every instance in the cluster.
- \item[Total time] is the time it took the whole process to complete. Note that it does not equal partial times summation.
-\end{description}
+\begin{itemize}
+ \item \emph{Deploying time}, stands for the time interval elapsed from the instant that the virtual cluster is starting to be spawned up to when all of the instances can be reached. It should be noted this component adds up to a second of error per instance, due precisely to the one second delay between retries as explained in section \ref{subsec:execution}.
+ \item \emph{Configuring time}, alludes to Hadoop configuration time requirement. It includes transferring and decompressing input data, pushing them to HDFS and laying Hadoop configuration out in the virtual cluster.
+ \item \emph{MapReducing time}, covers exclusively the amount required to complete the MapReduce job.
+ \item \emph{Cleaning time}, spans just the temporal lapse that is needed to remove the keypair and to shutdown every instance in the cluster.
+ \item \emph{Total time}, is the time it took the whole process to complete. Note that it does not equal partial times summation.
+\end{itemize}
 
-The \emph{MapReduce} application that we used is the \emph{well-known} \texttt{Wordcount}, which counts the number of words in an actual document set. \emph{Apache Hadoop} was configured to allocate to its underlaying JVM up to the maximum RAM available to the instance.
+The MapReduce application that we used is the well-known \texttt{WordCount}, which counts the number of words in an actual document set. Apache Hadoop was configured to allocate to its underlaying JVM up to the maximum RAM available to the instance.
 
-The first test case centered on evaluating \emph{qosh}'s timings when the virtual cluster was scaled out. Thus, a fixed 62.5 MB plain text document list was fed to a growing virtual cluster ranging from one 1 GB RAM/VCPU instance to eight ---4 instances on each node, as \emph{OpenStack} was laid over a dual-node cluster.
+The first test case centered on evaluating qosh timings when the virtual cluster was scaled out. Thus, a fixed 62.5 MB plain text document list was fed to a growing virtual cluster ranging from one 1 GB RAM/VCPU instance to eight (4 instances on each node, as OpenStack was laid over a dual-node cluster).
 
-For the second test case, the number of VMs spawned remained constant in different executions but its capabilities ---RAM and VCPU count--- were sequentially doubled from 1 GB RAM/VCPU to reach 4 GB RAM/VCPU, to account for \emph{qosh}'s tendency on vertical scaling. The 62.5 MB of plain text was kept untouched as on the first case.
+For the second test case, the number of VMs spawned remained constant in different executions but its capabilities ---RAM and VCPU count--- were sequentially doubled from 1 GB RAM/VCPU to reach 4 GB RAM/VCPU, to account for qosh tendency on vertical scaling. The 62.5 MB of plain text was kept untouched as on the first case.
 
 Lastly, a third test case presents the resulting measurements obtained on the same virtual cluster configuration, when the input size was sequentially doubled from 62.5 to 250 MB.
 
@@ -342,7 +359,7 @@ Lastly, a third test case presents the resulting measurements obtained on the sa
 \label{fig:scaleout}
 \end{figure}
 
-In figure \ref{fig:scalein} it is shown how vertical scaling affects \emph{qosh}'s performance. Deploying and cleaning times stay constant ---two instances on every execution---, whereas processing and configuring times are reduced as instances are upgraded.
+In figure \ref{fig:scalein} it is shown how vertical scaling affects qosh performance. Deploying and cleaning times stay constant (two instances on every execution), whereas processing and configuring times are reduced as instances are upgraded.
 
 \begin{figure}[htp]
 \centering
@@ -351,7 +368,7 @@ In figure \ref{fig:scalein} it is shown how vertical scaling affects \emph{qosh}
 \label{fig:scalein}
 \end{figure}
 
-Looking at both charts it can be seen that, for our particular dual-node deployment, vertical scaling uses infrastructure resources more efficiently: two 4 GB RAM/VCPU instances are \emph{roughly} equal to eight 1 GB RAM/VCPU, but total executing time is reduced by almost 28 \%.
+Looking at both charts it can be seen that, for our particular dual-node deployment, vertical scaling uses infrastructure resources more efficiently: two 4 GB RAM/VCPU instances are \emph{roughly} equal to eight 1 GB RAM/VCPU, but total executing time is reduced by almost 28\%.
 
 Finally, figure \ref{fig:inputscale} shows timing evolution as input size heightens.
 
@@ -365,25 +382,25 @@ Finally, figure \ref{fig:inputscale} shows timing evolution as input size height
 
 
 \section{Conclusions and future work}\label{sec:conclusions}
-\noindent \emph{qosh}'s main contributions to the current \emph{cloudy} landscape might be summarized in the following points.
+\noindent qosh's main contributions to the current \emph{cloudy} landscape might be summarized in the following points.
 
-\begin{description}
- \item[Simplicity] of installation and exploitation. \emph{qosh}'s installation script cannot be more straightforward and its web interface provides the means to define custom virtual \emph{Hadoop} deployments, to launch \emph{MapReduce} jobs and to download results easily and intuitively.
- \item[Vertical integration] of every module, from the web interface to file storage and infrastructure provisioning. \emph{qosh}'s installation script configures automatically a complete execution environment with no user intervention required.
- \item[High performance] on initial setup. \emph{qosh} has been conceived from the beginning to execute \emph{MapReduce} workflows on virtual clusters, while maintaining a minimum learning curve. Other similar solutions that ease the complexity to install and configure \emph{cloudy} environments like \emph{DevStack}, do not provide a usable environment to develop applications on top of a IaaS clouds.
- \item[Reusability] of the main components. Adhering to \emph{Amazon Web Services} standards when building the VM \cite{ahvm:2013:online} allows to deploy it over any EC2-compatible cloud IaaS. Aditionally, its worth considering the ability to make the VM run with no cloud architecture underneath, by setting up an installation on top of a real cluster.
- \item[Adaptability] to handle infrastructure provided by other cloud frameworks, and thus, opening the possibility to spread virtual clusters on hybrid clouds just by rewriting the \emph{Compute} module.
- \item[Transparency] in every way possible. Source code and documentation both from \emph{qosh} and its required libraries and applications, are publicly available online.
-\end{description}
+\begin{itemize}
+ \item Simplicity of installation and exploitation. The qosh installation script cannot be more straightforward and its web interface provides the means to define custom virtual Hadoop deployments, to launch MapReduce jobs and to download results easily and intuitively.
+ \item Vertical integration of every module, from the web interface to file storage and infrastructure provisioning. The qosh installation script configures automatically a complete execution environment with no user intervention required.
+ \item High performance on initial setup. qosh has been conceived from the beginning to execute MapReduce workflows on virtual clusters, while maintaining a minimum learning curve. Other similar solutions that ease the complexity to install and configure cloudy environments like \emph{DevStack}~\cite{devstack:2013:online}, do not provide an usable environment to develop applications on top of an IaaS cloud.
+ \item Reusability of the main components. Adhering to \emph{Amazon Web Services} standards when building the VM~\cite{ahvm:2013:online} allows to deploy it over any EC2-compatible cloud IaaS. Aditionally, its worth considering the ability to make the VM run with no cloud architecture underneath, by setting up an installation on top of a real cluster.
+ \item Adaptability to handle infrastructure provided by other cloud frameworks, and thus, opening the possibility to spread virtual clusters on hybrid clouds just by rewriting the \emph{Compute} module.
+ \item Transparency in every way possible. Source code and documentation both from qosh and its required libraries and applications, are publicly available online~\cite{qosh:2013:online}.
+\end{itemize}
 
 \subsection{Future work}
-\noindent Arguably, \emph{qosh}'s achilles heel is a certain coupling between modules. It would be interesting to abstract a REST client interface in order to code different \emph{delegates}, which could be used to adapt messages to any REST API language, clearing hybrid cloud implementations up.
+\noindent Arguably, the Achilles heel of qosh is a certain coupling between modules. It would be interesting to abstract a REST client interface in order to code different \emph{delegates}, which could be used to adapt messages to any REST API language, clearing hybrid cloud implementations up.
 
 Following the same decoupling dynamics, some use cases like view processing in \emph{Django} could be detached from the web interface as action objects, and be executed in an action processor. This action processor could be shaped, for instance, a processes pool consuming these action objects queuing in memory easing off horizontal scaling and load balancing.
 
 \nocite{*}
 
-\bibliographystyle{abbrv}
+\bibliographystyle{unsrt}
 \bibliography{qosh-paper}
 
 %\appendix
