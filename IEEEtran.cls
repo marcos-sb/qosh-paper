@@ -4,7 +4,7 @@
 %% 
 %% This is the official IEEE LaTeX class for authors of the Institute of 
 %% Electrical and Electronics Engineers (IEEE) Transactions journals and
-%% conferences.
+%% conferences. 
 %% 
 %% Support sites:
 %% http://www.michaelshell.org/tex/ieeetran/
