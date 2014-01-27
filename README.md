@@ -1,3 +1,3 @@
 qosh-paper
 ==========
-[Read draft pdf](qosh-paper.pdf)
+[Download draft pdf](qosh-paper.pdf)
