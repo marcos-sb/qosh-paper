@@ -1,3 +1,3 @@
 qosh-paper
 ==========
-[Download draft pdf](qosh-paper.pdf)
+[Download paper](http://www.oalib.com/paper/3064389)
